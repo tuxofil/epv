@@ -1,0 +1,30 @@
+%%% @author Aleksey Morarash <aleksey.morarash@gmail.com>
+%%% @since 2 Dec 2012
+%%% @copyright 2012, Aleksey Morarash <aleksey.morarash@gmail.com>
+%%% @doc epv application resource file
+
+{application, epv,
+ [
+  {description,  "ERLANG PHOTO VIEWER"},
+  {vsn,          "{{VERSION}}"},
+  {modules,      [epv,
+                  epv_app,
+                  epv_sup,
+                  epv_lang,
+                  epv_mime_types,
+                  epv_httpd,
+                  epv_httpd_warden,
+                  epv_html,
+                  epv_media,
+                  epv_lib
+                 ]},
+  {registered,   [epv_sup,
+                  epv_lang,
+                  epv_mime_types,
+                  epv_httpd_warden
+                 ]},
+  {applications, []},
+  {env,          []},
+  {mod,          {epv_app, []}}
+ ]}.
+

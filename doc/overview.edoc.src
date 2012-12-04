@@ -1,0 +1,22 @@
+@author Aleksey Morarash <aleksey.morarash@gmail.com>
+@copyright 2012 Aleksey Morarash <aleksey.morarash@gmail.com>
+@version {{VERSION}}
+@title epv - Erlang photo viewer.
+@doc == Contents ==
+
+<ol>
+ <li>{@section Summary}</li>
+ <li>{@section Building}</li>
+</ol>
+
+== Summary ==
+
+epv - is photo viewer with Web interface, written in Erlang
+programming language.
+
+== Building ==
+
+Chdir to top of epv sources tree and type:
+
+<code>$ make</code>
+

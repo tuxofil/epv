@@ -1,0 +1,24 @@
+%% File    : epv.lang
+%% Author  : Aleksey Morarash <aleksey.morarash@gmail.com>
+%% Created : 2 Dec 2012
+%% Description : language datum
+
+{languages,
+ [{en, "English"},
+  {ru, "Русский"}
+ ]}.
+
+%% ----------------------------------------------------------------------
+%% Common navigation
+
+{text, txt_home,
+ [{en, "Home"},
+  {ru, "Главная"}]}.
+
+%% ----------------------------------------------------------------------
+%% Error reports
+
+{text, txt_error,
+ [{en, "ERROR"},
+  {ru, "ОШИБКА"}]}.
+
