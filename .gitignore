@@ -1,0 +1,14 @@
+*~
+*.beam
+*.dump
+*.app
+*.html
+doc/*.css
+doc/*.png
+edoc-info
+*.edoc
+Emakefile
+*.log
+priv/meta
+priv/media
+.dialyzer_plt
