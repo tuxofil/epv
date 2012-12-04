@@ -99,13 +99,15 @@ directory(Path) ->
               thumbs(Path, Files))])]),
      html_page_footer()].
 
+dirs(_Path, []) -> "";
 dirs(Path, Subdirs) ->
-    string:join(
-      lists:map(
-        fun(Subdir) ->
-                format_dir(Path, Subdir)
-        end, Subdirs),
-      "<br>\n").
+    ["<hr>",
+     string:join(
+       lists:map(
+         fun(Subdir) ->
+                 format_dir(Path, Subdir)
+         end, Subdirs),
+       "<br>\n")].
 
 format_parents(Path) ->
     case all_parents(Path) of
