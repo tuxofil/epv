@@ -110,14 +110,18 @@ dirs(Path, Subdirs) ->
 format_parents(Path) ->
     case all_parents(Path) of
         [_ | _] = Parents ->
-            [a("/", "/") ++ "&nbsp;&gt;\n",
+            [a("/", folder_icon()) ++ "&nbsp;/\n",
              lists:map(
                fun(Parent) ->
                        a("/" ++ string:join(Parent, "/"),
-                         lists:last(Parent)) ++ "&nbsp;&gt;\n"
+                         folder_icon() ++ lists:last(Parent)) ++
+                           "&nbsp;/\n"
                end, Parents)];
         _ -> ""
     end ++ "\n".
+
+folder_icon() ->
+    "<img src='/res/folder.png' width=16 height=16>&nbsp;".
 
 all_parents(Path) ->
     all_parents(lists:reverse(string:tokens(Path, "/")), []).
@@ -127,7 +131,7 @@ all_parents([_ | Tail] = Path, Result) ->
     all_parents(Tail, [lists:reverse(Path) | Result]).
 
 format_dir(Path, Subdir) ->
-    a(myjoin(Path, Subdir), Subdir).
+    a(myjoin(Path, Subdir), folder_icon() ++ Subdir).
 
 thumbs(_Path, []) -> "&nbsp;";
 thumbs(Path, Files) ->
