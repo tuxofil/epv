@@ -92,6 +92,8 @@ install-debian: compile doc
 		/usr/lib/erlang/lib/$(APP)-$(VERSION)/priv
 	install --mode=644 priv/www/*.png priv/www/*.css  \
 		/usr/lib/erlang/lib/$(APP)-$(VERSION)/priv/www
+	install --mode=644 README.md LICENSE \
+		/usr/share/doc/erlang-$(APP)
 	install --mode=644 doc/*.html doc/*.png doc/*.css \
 		/usr/share/doc/erlang-$(APP)/html
 
