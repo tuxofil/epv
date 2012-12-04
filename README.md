@@ -21,19 +21,19 @@ To build HTML documentation you need erlang-edoc package installed.
 
 Chdir to epv sources top dir and type:
 
-$ make
+    $ make
 
 It will compile all Erlang binaries and HTML documentation. If
 you do not want generate HTML documentation, type:
 
-$ make compile
+    $ make compile
 
 ## Installing
 
 Sorry, there is no {RPM,DEB} packages for now. But you can
 install epv as separate service in Debian with:
 
-$ sudo make install-debian
+    $ sudo make install-debian
 
 epv init.d-script is all you need.
 After starting epv with something like "service epv start" point
@@ -51,5 +51,5 @@ so called "media dir" (defined in configuration). No restart or
 extra actions required but F5 in your browser.
 
 -----------------------------------------------------------------
-              Aleksey Morarash <aleksey.morarash@gmail.com>, 2012
+Aleksey Morarash <aleksey.morarash@gmail.com>, 2012
 
