@@ -57,12 +57,12 @@ view(Directory, Filename, Files) ->
                       "width=32 height=32>");
                 _ -> "&nbsp;"
             end),
-         td(
-           center(
-             a("/origin" ++ myjoin(Directory, Filename),
-               "<img src='/resized" ++ myjoin(Directory, Filename) ++ "' "
-               "border=1 "
-               "text='" ++ filename:rootname(Filename) ++ "'>"))),
+         td(["valign=top"],
+            center(
+              a("/origin" ++ myjoin(Directory, Filename),
+                "<img src='/resized" ++ myjoin(Directory, Filename) ++ "' "
+                "border=1 "
+                "text='" ++ filename:rootname(Filename) ++ "'>"))),
          td(["valign=top", "width=32"],
             case next_file(Filename, Files) of
                 {ok, Next} ->
