@@ -18,7 +18,7 @@
 %% ----------------------------------------------------------------------
 
 navig(Path) ->
-    case epv_media:exists(Path) of
+    case epv_media:exists(Path) andalso not epv_media:forbidden(Path) of
         true ->
             album(Path);
         false ->
@@ -28,7 +28,7 @@ navig(Path) ->
 album(Path) ->
     Directory = filename:dirname(Path),
     Filename = filename:basename(Path),
-    {Subdirs, Files} = epv_media:read_dir(Directory),
+    {Subdirs, Files} = epv_media:read_dir_filtered(Directory),
     [html_page_header(Filename),
      tag(
        table,
@@ -84,7 +84,7 @@ next_file(File, [_ | Tail]) -> next_file(File, Tail);
 next_file(_, _) -> undefined.
 
 directory(Path) ->
-    {Subdirs, Files} = epv_media:read_dir(Path),
+    {Subdirs, Files} = epv_media:read_dir_filtered(Path),
     [html_page_header(Path),
      table(
        ["cellpadding=0", "cellspacing=0", "border=0",

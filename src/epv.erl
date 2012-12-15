@@ -13,6 +13,12 @@
 %% exports of init.d-script helpers
 -export([ping/1, stop/1, hup/1]).
 
+%% utility exports
+-export(
+   [hide/1, unhide/1,
+    forbid/1, permit/1
+   ]).
+
 -include("epv.hrl").
 
 %% ----------------------------------------------------------------------
@@ -91,6 +97,33 @@ hup(Node) when is_atom(Node) ->
         ok -> halt(0);
         _ -> halt(1)
     end.
+
+%% ----------------------------------------------------------------------
+%% utility functions
+
+%% @doc Set 'hidden' flag for filename or directory.
+%% @spec hide(Filename) -> ok
+%%     Filename = file:filename()
+hide(Filename) ->
+    epv_media:hide(Filename).
+
+%% @doc Unset 'hidden' flag for filename or directory.
+%% @spec unhide(Filename) -> ok
+%%     Filename = file:filename()
+unhide(Filename) ->
+    epv_media:unhide(Filename).
+
+%% @doc Completely forbid to show filename or directory.
+%% @spec forbid(Filename) -> ok
+%%     Filename = file:filename()
+forbid(Filename) ->
+    epv_media:forbid(Filename).
+
+%% @doc 'Unforbid' to show filename or directory. Opposite to forbid/1 fun.
+%% @spec permit(Filename) -> ok
+%%     Filename = file:filename()
+permit(Filename) ->
+    epv_media:permit(Filename).
 
 %% ----------------------------------------------------------------------
 %% Internal functions

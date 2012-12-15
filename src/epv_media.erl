@@ -10,6 +10,7 @@
 %% API exports
 -export(
    [read_dir/1,
+    read_dir_filtered/1,
     exists/1,
     is_supported/1,
     file2thumb/1,
@@ -20,7 +21,10 @@
     resized_dir/0,
     set_meta/2,
     get_meta/1,
-    visible/1
+    visible/1,
+    forbidden/1,
+    hide/1, unhide/1,
+    forbid/1, permit/1
    ]).
 
 -include("epv.hrl").
@@ -32,7 +36,8 @@
 -export_type(
    [meta/0,
     meta_item/0,
-    permissions/0
+    permissions/0,
+    permission/0
    ]).
 
 -type meta() :: [meta_item()].
@@ -43,18 +48,19 @@
         {description, string()} |
         {orientation, 90 | 180 | -90}.
 
--type permissions() :: list().
+-type permissions() :: [permission()].
+
+-type permission() :: forbidden.
 
 %% ----------------------------------------------------------------------
 %% API functions
 %% ----------------------------------------------------------------------
 
 %% @doc Return media directory contents.
-%% @spec read_dir(Filename) -> {ok, Dirs, Files} | {error, Reason}
+%% @spec read_dir(Filename) -> {Dirs, Files}
 %%     Filename = file:filename(),
 %%     Dirs = [file:filename()],
-%%     Files = [file:filename()],
-%%     Reason = any()
+%%     Files = [file:filename()]
 read_dir([_ | _] = Directory) ->
     AbsDir = file2abs(Directory),
     case file:list_dir(AbsDir) of
@@ -78,6 +84,33 @@ read_dir([_ | _] = Directory) ->
     end;
 read_dir(_) ->
     read_dir(".").
+
+%% @doc Return media directory contents. Only not hidden and permitted
+%% items will be returned.
+%% @spec read_dir_filtered(Filename) -> {Dirs, Files}
+%%     Filename = file:filename(),
+%%     Dirs = [file:filename()],
+%%     Files = [file:filename()]
+read_dir_filtered([_ | _] = Directory) ->
+    case forbidden(Directory) of
+        true -> {[], []};
+        false ->
+            {Dirs, Files} = read_dir(Directory),
+            {lists:filter(
+               fun(Dir) ->
+                       FullName = filename:join(Directory, Dir),
+                       visible(FullName)
+                           andalso not forbidden(FullName)
+               end, Dirs),
+             lists:filter(
+               fun(File) ->
+                       FullName = filename:join(Directory, File),
+                       visible(FullName)
+                           andalso not forbidden(FullName)
+               end, Files)}
+    end;
+read_dir_filtered(_) ->
+    read_dir_filtered(".").
 
 %% @doc Return true if media file with specified name exists.
 %% @spec exists(Filename) -> boolean()
@@ -173,7 +206,7 @@ set_meta(Filename, Meta) when is_list(Meta) ->
               MetaFilename,
               lists:map(
                 fun(Term) ->
-                        io_lib:format("~p.", [Term])
+                        io_lib:format("~p.~n", [Term])
                 end, Meta));
         Error -> Error
     end.
@@ -196,9 +229,80 @@ visible(Filename) ->
     {ok, Meta} = get_meta(Filename),
     not proplists:get_bool(hidden, Meta).
 
+%% @doc Return true if supplied file or directory is forbidden to show.
+%% @spec forbidden(Filename) -> boolean()
+%%     Filename = file:filename()
+forbidden(Filename) ->
+    Components = lists:reverse(filename:split(Filename)),
+    forbidden_(Components).
+
+forbidden_([]) -> false;
+forbidden_([_ | Tail] = Components) ->
+    case forbidden_simple(filename:join(lists:reverse(Components))) of
+        true -> true;
+        false -> forbidden_(Tail)
+    end.
+
+forbidden_simple(Filename) ->
+    {ok, Meta} = get_meta(Filename),
+    Permissions = proplists:get_value(permissions, Meta, []),
+    lists:member(forbidden, Permissions).
+
+%% @doc Set 'hidden' flag for filename or directory.
+%% @spec hide(Filename) -> ok
+%%     Filename = file:filename()
+hide(Filename) ->
+    case visible(Filename) of
+        false -> ok;
+        true ->
+            {ok, Meta} = get_meta(Filename),
+            ok = set_meta(Filename, proplist_set(hidden, true, Meta))
+    end.
+
+%% @doc Unset 'hidden' flag for filename or directory.
+%% @spec unhide(Filename) -> ok
+%%     Filename = file:filename()
+unhide(Filename) ->
+    case visible(Filename) of
+        true -> ok;
+        false ->
+            {ok, Meta} = get_meta(Filename),
+            ok = set_meta(Filename, proplist_set(hidden, false, Meta))
+    end.
+
+%% @doc Completely forbid to show filename or directory.
+%% @spec forbid(Filename) -> ok
+%%     Filename = file:filename()
+forbid(Filename) ->
+    case forbidden(Filename) of
+        true -> ok;
+        false ->
+            {ok, Meta} = get_meta(Filename),
+            Permissions = proplists:get_value(permissions, Meta, []),
+            NewPermissions =
+                [forbidden | proplists:delete(forbidden, Permissions)],
+            ok = set_meta(Filename, proplist_set(permissions, NewPermissions, Meta))
+    end.
+
+%% @doc 'Unforbid' to show filename or directory. Opposite to forbid/1 fun.
+%% @spec permit(Filename) -> ok
+%%     Filename = file:filename()
+permit(Filename) ->
+    case forbidden(Filename) of
+        false -> ok;
+        true ->
+            {ok, Meta} = get_meta(Filename),
+            Permissions = proplists:get_value(permissions, Meta, []),
+            NewPermissions = proplists:delete(forbidden, Permissions),
+            ok = set_meta(Filename, proplist_set(permissions, NewPermissions, Meta))
+    end.
+
 %% ----------------------------------------------------------------------
 %% Internal functions
 %% ----------------------------------------------------------------------
+
+proplist_set(Key, Value, Proplist) ->
+    [{Key, Value} | proplists:delete(Key, Proplist)].
 
 file2abs(Filename) ->
     filename:join(epv_lib:cfg(?CFG_MEDIA_DIR), Filename).
