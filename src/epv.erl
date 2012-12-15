@@ -37,6 +37,7 @@ start_permanent() ->
 stop() ->
     application:stop(?MODULE).
 
+%% @private
 %% @doc Reread configs and reopen log files.
 %% @spec hup() -> ok
 hup() ->
@@ -49,6 +50,7 @@ hup() ->
 %% ----------------------------------------------------------------------
 %% init.d-script helpers
 
+%% @private
 %% @doc Ping Erlang node with epv running and exit with zero exit code
 %% if ping was successfull.
 %% @spec ping(Node) -> none()
@@ -62,6 +64,7 @@ ping(Node) when is_atom(Node) ->
         _ -> halt(1)
     end.
 
+%% @private
 %% @doc Stop Erlang node with epv running and exit with zero exit code
 %% if operation was successfull.
 %% @spec stop(Node) -> none()
@@ -75,6 +78,7 @@ stop(Node) when is_atom(Node) ->
         _ -> halt(1)
     end.
 
+%% @private
 %% @doc Reload config, reopen log files and exit with zero exit code
 %% if operation was successfull.
 %% @spec hup(Node) -> none()
