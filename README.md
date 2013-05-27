@@ -1,54 +1,52 @@
-# epv -- web based photo gallery
+# _epv_, a web-based photo gallery
 
 ## Overview
 
-epv is minimalistic photo gallery with Web interface.
-It does not any changes to directory with your media files
-and store all epv-related files (user defined meta info, thumbnails
-and resized pictures) to separate location.
+_epv_ is a minimalistic photo gallery with Web interface.
+It does not need write access to directories with your media files
+(all epv-related files, e.g., user defined meta info, thumbnails
+and resized pictures, are kept in a separate location).
 
 ## Requirements
-
-You need following packages installed to run epv:
 
 * erlang;
 * erlang-inets;
 * imagemagick.
 
-To build HTML documentation you need erlang-edoc package installed.
+To build HTML documentation, you need erlang-edoc.
 
 ## Building
 
-Chdir to epv sources top dir and type:
+To build all Erlang binaries as well as HTML documentation, execute:
 
     $ make
 
-It will compile all Erlang binaries and HTML documentation. If
-you do not want generate HTML documentation, type:
+If all you need is just binaries, do:
 
     $ make compile
 
 ## Installing
 
-Sorry, there is no {RPM,DEB} packages for now. But you can
-install epv as separate service in Debian with:
+Sorry, there are no RPM or DEB packages yet, but you can
+install _epv_ as a separate service in Debian with:
 
     $ sudo make install-debian
 
-epv init.d-script is all you need.
-After starting epv with something like "service epv start" point
-your browser at http://127.0.0.1:8080/ (8080 - is the default
-TCP port number).
+which will put an epv start/stop script in /etc/init.d.
+After starting _epv_ with something like "service epv start", _epv_
+will start serving http requests on port 8080 (default, configurable).
 
-Configuration file located at /etc/epv.config, logs will be stored
-in /var/log/epv/, thumbnails and resized images will be stored in
-/var/lib/epv/meta (by default).
+## Configuration
+
+TCP port and other settings for _epv_ are stored in /etc/epv.config. By default,
+logs will be created in /var/log/epv, and thumbnails and resized images will be stored in
+/var/lib/epv/meta.
 
 ## Adding some media
 
 Simply add new directories or image files (or symlink them) to
-so called "media dir" (defined in configuration). No restart or
-extra actions required but F5 in your browser.
+the so called "media dir" (defined in configuration). No restart or
+extra actions required except F5 in your browser.
 
 -----------------------------------------------------------------
 Aleksey Morarash <aleksey.morarash@gmail.com>, 2012
