@@ -184,9 +184,6 @@ h1(String)  -> tag("h1", String).
 table(Attrs, Rows) ->
     tag(table, Attrs, Rows).
 
-td(String) ->
-    td([], String).
-
 td(Attrs, String) ->
     tag(td, Attrs, String).
 
