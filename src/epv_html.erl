@@ -159,8 +159,6 @@ myjoin(Path, File) ->
 %% ----------------------------------------------------------------------
 
 html_page_header(Title) ->
-    html_page_header(Title, []).
-html_page_header(Title, Options) ->
     "<html>\n\n"
         "<head>\n"
         "<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n"
@@ -169,17 +167,11 @@ html_page_header(Title, Options) ->
         "<title>" ++ Title ++ "</title>\n"
         "<link rel='stylesheet' href='/res/styles.css'>\n"
         "</head>\n\n"
-        "<body>\n\n" ++
-        case [S || {h1, S} <- Options] of
-            [H1 | _] -> h1(H1);
-            _ -> ""
-        end.
+        "<body>\n\n".
 
 html_page_footer() ->
     "\n\n</body>\n"
         "</html>\n".
-
-h1(String)  -> tag("h1", String).
 
 table(Attrs, Rows) ->
     tag(table, Attrs, Rows).

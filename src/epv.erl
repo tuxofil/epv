@@ -61,8 +61,8 @@ hup() ->
 %% if ping was successfull.
 %% @spec ping(Node) -> none()
 %%     Node = atom()
--spec ping(Node::atom() | [Node::atom()]) -> no_return().
-ping([Node]) ->
+-spec ping((Node::node()) | [Node::node()]) -> no_return().
+ping([Node]) when is_atom(Node) ->
     ping(Node);
 ping(Node) when is_atom(Node) ->
     case net_adm:ping(Node) of
@@ -75,8 +75,8 @@ ping(Node) when is_atom(Node) ->
 %% if operation was successfull.
 %% @spec stop(Node) -> none()
 %%     Node = atom()
--spec stop(Node::atom() | [Node::atom()]) -> no_return().
-stop([Node]) ->
+-spec stop(Node::node() | [Node::node()]) -> no_return().
+stop([Node]) when is_atom(Node) ->
     stop(Node);
 stop(Node) when is_atom(Node) ->
     case catch rpc:call(Node, init, stop, [0]) of
@@ -89,8 +89,8 @@ stop(Node) when is_atom(Node) ->
 %% if operation was successfull.
 %% @spec hup(Node) -> none()
 %%     Node = atom()
--spec hup(Node::atom() | [Node::atom()]) -> no_return().
-hup([Node]) ->
+-spec hup(Node::node() | [Node::node()]) -> no_return().
+hup([Node]) when is_atom(Node) ->
     hup(Node);
 hup(Node) when is_atom(Node) ->
     case catch rpc:call(Node, epv, hup, []) of

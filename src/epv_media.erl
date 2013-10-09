@@ -154,11 +154,12 @@ create_thumb_if_needed(Filename) ->
         true -> ok;
         false ->
             ok = filelib:ensure_dir(ThumbFilename),
-            os:cmd(
-              io_lib:format(
-                "convert \"~s\" "
-                "-thumbnail ~wx~w -strip -auto-orient "
-                "\"~s\"", [file2abs(Filename), 160, 120, ThumbFilename])),
+            _IgnoredStdout =
+                os:cmd(
+                  io_lib:format(
+                    "convert \"~s\" "
+                    "-thumbnail ~wx~w -strip -auto-orient \"~s\"",
+                    [file2abs(Filename), 160, 120, ThumbFilename])),
             ok
     end.
 
@@ -172,12 +173,12 @@ create_resized_if_needed(Filename) ->
         true -> ok;
         false ->
             ok = filelib:ensure_dir(ResizedFilename),
-            os:cmd(
-              io_lib:format(
-                "convert \"~s\" "
-                "-resize '~wx~w>' -auto-orient "
-                "\"~s\"",
-                [file2abs(Filename), 960, 720, ResizedFilename])),
+            _IgnoredStdout =
+                os:cmd(
+                  io_lib:format(
+                    "convert \"~s\" "
+                    "-resize '~wx~w>' -auto-orient \"~s\"",
+                    [file2abs(Filename), 960, 720, ResizedFilename])),
             ok
     end.
 
