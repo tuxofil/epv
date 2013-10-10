@@ -57,10 +57,9 @@
 %% ----------------------------------------------------------------------
 
 %% @doc Return media directory contents.
-%% @spec read_dir(Filename) -> {Dirs, Files}
-%%     Filename = file:filename(),
-%%     Dirs = [file:filename()],
-%%     Files = [file:filename()]
+-spec read_dir(Filename :: file:filename()) ->
+                      {Dirs :: [file:filename()],
+                       Files :: [file:filename()]}.
 read_dir([_ | _] = Directory) ->
     AbsDir = file2abs(Directory),
     case file:list_dir(AbsDir) of
@@ -87,10 +86,9 @@ read_dir(_) ->
 
 %% @doc Return media directory contents. Only not hidden and permitted
 %% items will be returned.
-%% @spec read_dir_filtered(Filename) -> {Dirs, Files}
-%%     Filename = file:filename(),
-%%     Dirs = [file:filename()],
-%%     Files = [file:filename()]
+-spec read_dir_filtered(Filename :: file:filename()) ->
+                               {Dirs :: [file:filename()],
+                                Files :: [file:filename()]}.
 read_dir_filtered([_ | _] = Directory) ->
     case forbidden(Directory) of
         true -> {[], []};
@@ -113,16 +111,14 @@ read_dir_filtered(_) ->
     read_dir_filtered(".").
 
 %% @doc Return true if media file with specified name exists.
-%% @spec exists(Filename) -> boolean()
-%%     Filename = file:filename()
+-spec exists(Filename :: file:filename()) -> boolean().
 exists(Filename) ->
     is_supported(Filename)
         andalso (not filelib:is_dir(AbsFilename = file2abs(Filename)))
         andalso filelib:is_file(AbsFilename).
 
 %% @doc Return 'true' if supplied file is supported by epv.
-%% @spec is_supported(Filename) -> boolean()
-%%     Filename = file:filename()
+-spec is_supported(Filename :: file:filename()) -> boolean().
 is_supported(Filename) ->
     case filename:extension(Filename) of
         "." ++ Extension ->
@@ -131,23 +127,20 @@ is_supported(Filename) ->
     end.
 
 %% @doc Return absolute filename for thumbnail.
-%% @spec file2thumb(Filename) -> ThumbFilename
-%%     Filename = file:filename(),
-%%     ThumbFilename = file:filename()
+-spec file2thumb(Filename :: file:filename()) ->
+                        ThumbFilename :: file:filename().
 file2thumb(Filename) ->
     filename:join(thumb_dir(), Filename).
 
 %% @doc Return absolute filename for resized image.
-%% @spec file2resized(Filename) -> ResizedFilename
-%%     Filename = file:filename(),
-%%     ResizedFilename = file:filename()
+-spec file2resized(Filename :: file:filename()) ->
+                          ResizedFilename :: file:filename().
 file2resized(Filename) ->
     filename:join(resized_dir(), Filename).
 
 %% @doc Create thumbnail if it is not exists yet.
-%% @spec create_thumb_if_needed(Filename) -> ok | {error, Reason}
-%%     Filename = file:filename(),
-%%     Reason = any()
+-spec create_thumb_if_needed(Filename :: file:filename()) ->
+                                    ok | {error, Reason :: any()}.
 create_thumb_if_needed(Filename) ->
     ThumbFilename = file2thumb(Filename),
     case filelib:is_regular(ThumbFilename) of
@@ -164,9 +157,8 @@ create_thumb_if_needed(Filename) ->
     end.
 
 %% @doc Create resized image if it is not exists yet.
-%% @spec create_resized_if_needed(Filename) -> ok | {error, Reason}
-%%     Filename = file:filename(),
-%%     Reason = any()
+-spec create_resized_if_needed(Filename :: file:filename()) ->
+                                      ok | {error, Reason :: any()}.
 create_resized_if_needed(Filename) ->
     ResizedFilename = file2resized(Filename),
     case filelib:is_regular(ResizedFilename) of
@@ -184,21 +176,19 @@ create_resized_if_needed(Filename) ->
 
 %% @doc Return absolute path for directory where thumbnails will
 %% be stored.
-%% @spec thumb_dir() -> file:filename()
+-spec thumb_dir() -> Directory :: file:filename().
 thumb_dir() ->
     filename:join(epv_lib:cfg(?CFG_META_DIR), "thumbs").
 
 %% @doc Return absolute path for directory where resized images will
 %% be stored.
-%% @spec resized_dir() -> file:filename()
+-spec resized_dir() -> Directory :: file:filename().
 resized_dir() ->
     filename:join(epv_lib:cfg(?CFG_META_DIR), "resized").
 
 %% @doc Set meta data for file.
-%% @spec set_meta(Filename, Meta) -> ok | {error, Reason}
-%%     Filename = file:filename(),
-%%     Meta = meta(),
-%%     Reason = any()
+-spec set_meta(Filename :: file:filename(), Meta :: meta()) ->
+                      ok | {error, Reason :: any()}.
 set_meta(Filename, Meta) when is_list(Meta) ->
     MetaFilename = file2meta(Filename),
     case filelib:ensure_dir(MetaFilename) of
@@ -213,10 +203,8 @@ set_meta(Filename, Meta) when is_list(Meta) ->
     end.
 
 %% @doc Fetch meta data for file or directory.
-%% @spec get_meta(Filename) -> {ok, Meta} | {error, Reason}
-%%     Filename = file:filename(),
-%%     Meta = meta(),
-%%     Reason = any()
+-spec get_meta(Filename :: file:filename()) ->
+                      {ok, Meta :: meta()} | {error, Reason :: any()}.
 get_meta(Filename) ->
     case file:consult(file2meta(Filename)) of
         {error, enoent} -> {ok, []};
@@ -224,19 +212,18 @@ get_meta(Filename) ->
     end.
 
 %% @doc Return true if supplied file or directory is visible.
-%% @spec visible(Filename) -> boolean()
-%%     Filename = file:filename()
+-spec visible(Filename :: file:filename()) -> boolean().
 visible(Filename) ->
     {ok, Meta} = get_meta(Filename),
     not proplists:get_bool(hidden, Meta).
 
 %% @doc Return true if supplied file or directory is forbidden to show.
-%% @spec forbidden(Filename) -> boolean()
-%%     Filename = file:filename()
+-spec forbidden(Filename :: file:filename()) -> boolean().
 forbidden(Filename) ->
     Components = lists:reverse(filename:split(Filename)),
     forbidden_(Components).
 
+-spec forbidden_(FilenameTokens :: [nonempty_string()]) -> boolean().
 forbidden_([]) -> false;
 forbidden_([_ | Tail] = Components) ->
     case forbidden_simple(filename:join(lists:reverse(Components))) of
@@ -244,14 +231,14 @@ forbidden_([_ | Tail] = Components) ->
         false -> forbidden_(Tail)
     end.
 
+-spec forbidden_simple(Filename :: file:filename()) -> boolean().
 forbidden_simple(Filename) ->
     {ok, Meta} = get_meta(Filename),
     Permissions = proplists:get_value(permissions, Meta, []),
     lists:member(forbidden, Permissions).
 
 %% @doc Set 'hidden' flag for filename or directory.
-%% @spec hide(Filename) -> ok
-%%     Filename = file:filename()
+-spec hide(Filename :: file:filename()) -> ok.
 hide(Filename) ->
     case visible(Filename) of
         false -> ok;
@@ -261,8 +248,7 @@ hide(Filename) ->
     end.
 
 %% @doc Unset 'hidden' flag for filename or directory.
-%% @spec unhide(Filename) -> ok
-%%     Filename = file:filename()
+-spec unhide(Filename :: file:filename()) -> ok.
 unhide(Filename) ->
     case visible(Filename) of
         true -> ok;
@@ -272,8 +258,7 @@ unhide(Filename) ->
     end.
 
 %% @doc Completely forbid to show filename or directory.
-%% @spec forbid(Filename) -> ok
-%%     Filename = file:filename()
+-spec forbid(Filename :: file:filename()) -> ok.
 forbid(Filename) ->
     case forbidden(Filename) of
         true -> ok;
@@ -286,8 +271,7 @@ forbid(Filename) ->
     end.
 
 %% @doc 'Unforbid' to show filename or directory. Opposite to forbid/1 fun.
-%% @spec permit(Filename) -> ok
-%%     Filename = file:filename()
+-spec permit(Filename :: file:filename()) -> ok.
 permit(Filename) ->
     case forbidden(Filename) of
         false -> ok;
@@ -302,15 +286,21 @@ permit(Filename) ->
 %% Internal functions
 %% ----------------------------------------------------------------------
 
+-spec proplist_set(Key :: atom(), NewValue :: any(),
+                   Proplist :: [{Key :: atom(), Value :: any()}]) ->
+                          NewProplist :: [{Key :: atom(), Value :: any()}].
 proplist_set(Key, Value, Proplist) ->
     [{Key, Value} | proplists:delete(Key, Proplist)].
 
+-spec file2abs(Filename :: file:filename()) -> AbsPath :: file:filename().
 file2abs(Filename) ->
     filename:join(epv_lib:cfg(?CFG_MEDIA_DIR), Filename).
 
+-spec file2meta(Filename :: file:filename()) -> MetaPath :: file:filename().
 file2meta(Filename) ->
     filename:join(meta_info_dir(), Filename ++ ".info").
 
+-spec meta_info_dir() -> MetaDir :: file:filename().
 meta_info_dir() ->
     filename:join(epv_lib:cfg(?CFG_META_DIR), "info").
 

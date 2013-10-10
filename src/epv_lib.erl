@@ -22,9 +22,7 @@
 %% ----------------------------------------------------------------------
 
 %% @doc Return value for supplied configuration key.
-%% @spec cfg(Key) -> Value
-%%     Key = atom(),
-%%     Value = any()
+-spec cfg(Key :: atom()) -> Value :: any().
 cfg(Key) when is_atom(Key) ->
     case application:get_env(epv, Key) of
         {ok, Value} -> Value;
@@ -36,34 +34,29 @@ cfg(Key) when is_atom(Key) ->
     end.
 
 %% @doc Return absolute filename for file located in epv priv directory.
-%% @spec in_priv(Basename) -> AbsFilename
-%%     Basename = file:filename(),
-%%     AbsFilename = file:filename()
+-spec in_priv(Basename :: file:filename()) -> AbsFilename :: file:filename().
 in_priv(Basename) ->
     filename:join(priv_dir(), Basename).
 
 %% @doc Removes Characters from beginning and ending of String.
-%% @spec strip(String, Characters) -> StrippedString
-%%     String = string(),
-%%     Characters = string(),
-%%     StrippedString = string()
-strip(String, Characters) ->
+-spec strip(Subject :: string(), Characters :: string()) -> Stripped :: string().
+strip(Subject, Characters) ->
     lists:reverse(
       strip_(
         lists:reverse(
-          strip_(String, Characters)),
+          strip_(Subject, Characters)),
         Characters)).
 strip_([], _Chars) -> [];
-strip_([Char | Tail] = String, Chars) ->
+strip_([Char | Tail] = Subject, Chars) ->
     case lists:member(Char, Chars) of
         true ->
             strip_(Tail, Chars);
         _ ->
-            String
+            Subject
     end.
 
 %% @doc Make decode of possibly url encoded string.
-%% @spec url_decode(string()) -> string()
+-spec url_decode(UrlEncoded :: string()) -> PlainString :: string().
 url_decode([]) -> [];
 url_decode([$%, A, B | Tail]) ->
     [erlang:list_to_integer([A, B], 16) | url_decode(Tail)];
@@ -74,6 +67,7 @@ url_decode([C | Tail]) ->
 %% Internal functions
 %% ----------------------------------------------------------------------
 
+-spec priv_dir() -> PrivDirPath :: file:filename().
 priv_dir() ->
     case code:lib_dir(epv, priv) of
         {error, bad_name} -> "priv";

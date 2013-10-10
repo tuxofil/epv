@@ -21,6 +21,8 @@
 
 -include("epv.hrl").
 
+-record(state, {}).
+
 %% ----------------------------------------------------------------------
 %% Internal signals and keywords
 %% ----------------------------------------------------------------------
@@ -33,9 +35,7 @@
 %% ----------------------------------------------------------------------
 
 %% @doc Start process as part of a supervision tree.
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Reason}
-%%     Pid = pid(),
-%%     Reason = term()
+-spec start_link() -> {ok, pid()} | ignore | {error, Reason :: any()}.
 start_link() ->
     gen_server:start_link(
       {local, ?MODULE}, ?MODULE,
@@ -43,15 +43,14 @@ start_link() ->
 
 %% @equiv gettext(TextID, undefined)
 %% @doc Fetches localized text with specified ID.
-%% @spec gettext(TextID) -> string()
-%%     TextID = term()
+-spec gettext(TextID :: any()) -> LocalizedText :: string().
 gettext(TextID) ->
     gettext(TextID, undefined).
 
 %% @doc Fetches localized text with specified ID.
-%% @spec gettext(TextID, LangID) -> string()
-%%     TextID = term(),
-%%     LangID = atom()
+-spec gettext(TextID :: any(),
+              LangID :: atom() | undefined) ->
+                     LocalizedText :: string().
 gettext(TextID, undefined) ->
     case epv_lib:cfg(?CFG_LANGUAGE) of
         undefined -> throw(undefined_language);
@@ -69,13 +68,13 @@ gettext(TextID, LangID) ->
     end.
 
 %% @doc Schedule configuration reload.
-%% @spec hup() -> ok
+-spec hup() -> ok.
 hup() ->
     gen_server:cast(?MODULE, ?CAST_HUP).
 
 %% @doc Return process internal state term.
 %% @hidden
-%% @spec get_state() -> tuple()
+-spec get_state() -> #state{}.
 get_state() ->
     gen_server:call(?MODULE, ?CALL_GET_STATE).
 
@@ -83,37 +82,41 @@ get_state() ->
 %% gen_server callbacks
 %% ----------------------------------------------------------------------
 
--record(state, {}).
-
 %% @hidden
+-spec init(Args :: any()) -> {ok, InitialState :: #state{}}.
 init(_Args) ->
     ?MODULE = ets:new(?MODULE, [named_table]),
     ok = hup(),
     {ok, _State = #state{}}.
 
 %% @hidden
+-spec handle_cast(Request :: ?CAST_HUP, State :: #state{}) ->
+                         {noreply, NewState :: #state{}}.
 handle_cast(?CAST_HUP, State) ->
     {Languages, Texts} = do_read(),
     true = ets:insert(?MODULE, [{languages, Languages} | Texts]),
-    {noreply, State};
-handle_cast(_Request, State) ->
     {noreply, State}.
 
 %% @hidden
+-spec handle_info(Info :: any(), State :: #state{}) ->
+                         {noreply, State :: #state{}}.
 handle_info(_Request, State) ->
     {noreply, State}.
 
 %% @hidden
+-spec handle_call(Request :: ?CALL_GET_STATE, From :: any(), State :: #state{}) ->
+                         {reply, Reply :: #state{}, NewState :: #state{}}.
 handle_call(?CALL_GET_STATE, _From, State) ->
-    {reply, State, State};
-handle_call(_Request, _From, State) ->
-    {noreply, State}.
+    {reply, State, State}.
 
 %% @hidden
+-spec terminate(Reason :: any(), State :: #state{}) -> ok.
 terminate(_Reason, _State) ->
     ok.
 
 %% @hidden
+-spec code_change(OldVersion :: any(), State :: #state{}, Extra :: any()) ->
+                         {ok, NewState :: #state{}}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 

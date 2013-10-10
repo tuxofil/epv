@@ -42,8 +42,7 @@
 %% ----------------------------------------------------------------------
 
 %% @doc Start inets HTTP server.
-%% @spec start_link() -> {ok, Pid}
-%%     Pid = pid()
+-spec start_link() -> {ok, Pid :: pid()} | {error, Reason :: any()}.
 start_link() ->
     BindAddr = epv_lib:cfg(?CFG_TCP_BIND_ADDRESS),
     BindPort = epv_lib:cfg(?CFG_TCP_PORT_NUMBER),
@@ -70,6 +69,9 @@ start_link() ->
 -define(HTTP_POST, "POST").
 
 %% @hidden
+-spec do(ModData :: #mod{}) ->
+                {proceed, NewData :: any()} |
+                {break, NewData :: any()}.
 do(ModData) ->
     try do_(ModData)
     catch
@@ -145,6 +147,13 @@ split4pathNquery(_, Path) ->
 
 -define(mime_text_html, "text/html").
 
+-spec serve_file(ModData :: #mod{},
+                 Path ::
+                   ({BaseDir :: file:filename(),
+                     Filename :: file:filename()} |
+                    (Filename :: file:filename()))) ->
+                        {proceed, NewData :: list()} |
+                        {break, NewData :: list()}.
 serve_file(ModData, {BaseDir, Filename}) ->
     serve_file(ModData, filename:join(BaseDir, Filename));
 serve_file(ModData, Filename) ->
@@ -184,6 +193,9 @@ serve_file(ModData, Filename) ->
                 epv_lang:gettext(txt_error)}}]}
     end.
 
+-spec parse_cookies(ModData :: #mod{}) ->
+                           Cookies :: [{Key :: nonempty_string(),
+                                        Value :: string()}].
 parse_cookies(ModData) ->
     lists:flatmap(
       fun(Str0) ->
@@ -198,6 +210,8 @@ parse_cookies(ModData) ->
           "cookie", ModData#mod.parsed_header, []),
         ";")).
 
+-spec process(ModData :: #mod{}, Path :: string(), Query :: any()) ->
+                     {proceed, NewData :: list()}.
 process(ModData, Path, _Query) ->
     Content = epv_html:navig(epv_lib:strip(Path, "/")),
     Binary = list_to_binary(Content),
