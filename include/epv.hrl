@@ -45,7 +45,7 @@
 -define(
    TRACE(Format, Args),
    ok = io:format(
-          ["TRACE AT ~w, line:~w, pid:~w: ***\n\t", Format, "\n"],
+          "TRACE AT ~w, line:~w, pid:~w: ***\n\t" ++ Format ++ "\n",
           [?MODULE, ?LINE, self() | Args])).
 -else.
 -define(TRACE(Format, Args), ok).
