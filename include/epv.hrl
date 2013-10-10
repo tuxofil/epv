@@ -38,5 +38,18 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+%% ----------------------------------------------------------------------
+%% other defs
+
+-ifdef(TRACE).
+-define(
+   TRACE(Format, Args),
+   ok = io:format(
+          ["TRACE AT ~w, line:~w, pid:~w: ***\n\t", Format, "\n"],
+          [?MODULE, ?LINE, self() | Args])).
+-else.
+-define(TRACE(Format, Args), ok).
+-endif.
+
 -endif.
 
