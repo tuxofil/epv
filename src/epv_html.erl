@@ -155,7 +155,8 @@ format_parents(Path) ->
 folder_icon() ->
     "<img src='/res/folder.png' width=16 height=16>&nbsp;".
 
--spec all_parents(Path :: file:filename()) -> [ParentPath :: file:filename()].
+-spec all_parents(Path :: file:filename()) ->
+                         [ParentPath :: [PathToken :: nonempty_string()]].
 all_parents(Path) ->
     all_parents(lists:reverse(string:tokens(Path, "/")), []).
 
