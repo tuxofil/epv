@@ -152,7 +152,9 @@ create_thumb_if_needed(Filename) ->
                   io_lib:format(
                     "convert \"~s\" "
                     "-thumbnail ~wx~w -strip -auto-orient \"~s\"",
-                    [file2abs(Filename), 160, 120, ThumbFilename])),
+                    [file2abs(Filename),
+                     ?THUMB_WIDTH, ?THUMB_HEIGHT,
+                     ThumbFilename])),
             ok
     end.
 
@@ -170,7 +172,9 @@ create_resized_if_needed(Filename) ->
                   io_lib:format(
                     "convert \"~s\" "
                     "-resize '~wx~w>' -auto-orient \"~s\"",
-                    [file2abs(Filename), 960, 720, ResizedFilename])),
+                    [file2abs(Filename),
+                     ?RESIZED_WIDTH, ?RESIZED_HEIGHT,
+                     ResizedFilename])),
             ok
     end.
 

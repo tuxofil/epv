@@ -32,6 +32,15 @@
    ]).
 
 %% ----------------------------------------------------------------------
+%% image sizes
+
+-define(THUMB_WIDTH, 160).
+-define(THUMB_HEIGHT, 120).
+
+-define(RESIZED_WIDTH, 960).
+-define(RESIZED_HEIGHT, 720).
+
+%% ----------------------------------------------------------------------
 %% eunit
 
 -ifdef(TEST).
