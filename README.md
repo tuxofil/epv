@@ -12,9 +12,10 @@ and resized pictures, are kept in a separate location).
 * erlang;
 * erlang-inets;
 * imagemagick;
-* ffmpeg (for video support).
-
-To build HTML documentation, you need erlang-edoc.
+* ffmpeg - optional (for video support);
+* erlang-edoc - optional (for 'html' makefile target);
+* erlang-eunit - optional (for 'eunit' and 'all-tests' makefile targets);
+* zip - optional (for 'epv' makefile target).
 
 ## Building
 
@@ -22,9 +23,17 @@ To build all Erlang binaries as well as HTML documentation, execute:
 
     $ make
 
-If all you need is just binaries, do:
+If all you need is just canonic Erlang binaries, do:
 
     $ make compile
+
+To build HTML documentation (in doc subdir):
+
+    $ make html
+
+To build all-in-one-file binary (standalone escript):
+
+    $ make epv
 
 ## Running
 
@@ -32,6 +41,28 @@ The easiest way to start it:
 
     $ make epv
     $ ./epv /path/to/your/media /path/where/epv/thumbs/will/be/stored
+
+For further details see output of
+
+    $ ./epv --help
+
+## Testing
+
+To run functional tests type:
+
+    $ make test
+
+To run unit tests type:
+
+    $ make eunit
+
+To run dialyzer tests type:
+
+    $ make dialyze
+
+To run all mentioned tests type:
+
+    $ make all-tests
 
 ## Installing
 
@@ -52,9 +83,13 @@ There is a few targets for staged installation (using DESTDIR):
 
 ## Configuration
 
-TCP port and other settings for _epv_ are stored in /etc/epv.config. By default,
-logs will be created in /var/log/epv, and thumbnails and resized images will be stored in
-/var/lib/epv/meta.
+When running as normal Erlang application all configurations is taken
+from Erlang application environment. Example of such configuration is
+presented in etc/app.config file.
+
+When running as all-in-one-file escript (see 'epv' makefile target)
+all configurations is set with epv command line options and arguments.
+See 'epv --help' output for more details.
 
 ## Adding some media
 
