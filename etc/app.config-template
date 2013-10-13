@@ -20,6 +20,9 @@
    %% Where static HTML resources located
    %{www_dir, "priv/www"},
 
+   %% Language
+   %% {language, en},
+
    %% mime types definitions filename
    %{mime_types, "/etc/mime.types"}
   ]},
