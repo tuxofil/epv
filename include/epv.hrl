@@ -12,6 +12,9 @@
 -define(CFG_WWW_DIR, www_dir).
 -define(CFG_MIME_TYPES, mime_types).
 
+-define(CFG_PRIV_DIR, priv_dir).
+-define(CFG_DAEMON_ID, daemon_id).
+
 -define(
    DEFAULTS,
    [{?CFG_TCP_BIND_ADDRESS, {0,0,0,0}},

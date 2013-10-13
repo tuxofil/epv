@@ -69,8 +69,13 @@ url_decode([C | Tail]) ->
 
 -spec priv_dir() -> PrivDirPath :: file:filename().
 priv_dir() ->
-    case code:lib_dir(epv, priv) of
-        {error, bad_name} -> "priv";
-        Path -> Path
+    case application:get_env(epv, ?CFG_PRIV_DIR) of
+        {ok, Path} ->
+            Path;
+        undefined ->
+            case code:lib_dir(epv, priv) of
+                {error, bad_name} -> "priv";
+                Path -> Path
+            end
     end.
 

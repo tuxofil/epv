@@ -19,6 +19,9 @@
     forbid/1, permit/1
    ]).
 
+%% escript entry point
+-export([main/1]).
+
 -include("epv.hrl").
 
 %% ----------------------------------------------------------------------
@@ -116,6 +119,31 @@ permit(Filename) ->
     epv_media:permit(Filename).
 
 %% ----------------------------------------------------------------------
+%% escript entry point
+
+-spec main(Args :: [string()]) -> no_return().
+main(Args) ->
+    ok = load_app(),
+    ok = parse_args(Args),
+    DaemonID =
+        case application:get_env(?MODULE, ?CFG_DAEMON_ID) of
+            {ok, DaemonID0} ->
+                DaemonID0;
+            undefined ->
+                ?MODULE
+        end,
+    case net_kernel:start([DaemonID, shortnames]) of
+        {ok, _Pid} ->
+            ok;
+        {error, Reason} ->
+            err("Failed to start Erlang Distribution: ~p", [Reason])
+    end,
+    {ok, PrivDir} = application:get_env(?MODULE, ?CFG_PRIV_DIR),
+    ok = deflate(filename:dirname(PrivDir)),
+    ok = start_app(),
+    ok = timer:sleep(infinity).
+
+%% ----------------------------------------------------------------------
 %% Internal functions
 %% ----------------------------------------------------------------------
 
@@ -154,4 +182,139 @@ set_envs(App, NewEnv) ->
       fun({Key, Value}) ->
               ok = application:set_env(App, Key, Value)
       end, NewEnv).
+
+%% ----------------------------------------------------------------------
+%% escript helpers
+
+-spec usage() -> no_return().
+usage() ->
+    io:format(
+      "Erlang Photo Viewer v.~s~n~n"
+      "Usage: ~s [options] MediaDirectoryPath MetaDirectoryPath~n~n"
+      "Options:~n"
+      "\t-h, --help  - show this memo;~n"
+      "\t-l Language - use given Language. Default is 'en' (English);~n"
+      "\t-i Addr     - IP address to bind to. Default is 0.0.0.0 (any);~n"
+      "\t-p Port     - TCP port number to bind to. Default is 8080.~n"
+      "~n"
+      "Additional options:~n"
+      "\t--sasl      - start SASL;~n"
+      "\t--id DaemonID - Default is 'epv'. Set it to something else if~n"
+      "\t              you want to run several instances of the program~n"
+      "\t              at the same time.~n"
+      "~n",
+      [version(), escript:script_name()]),
+    halt().
+
+%% @doc Parse and process command line options and arguments.
+-spec parse_args(Args :: [string()]) -> ok | no_return().
+parse_args([]) ->
+    usage();
+parse_args(["-h" | _]) ->
+    usage();
+parse_args(["--help" | _]) ->
+    usage();
+parse_args([MediaDirPath, MetaDirPath]) ->
+    case filelib:is_dir(MediaDirPath) of
+        true ->
+            set_env(?CFG_META_DIR, filename:join(MetaDirPath, "meta")),
+            set_env(?CFG_PRIV_DIR, filename:join(MetaDirPath, "priv")),
+            set_env(?CFG_MEDIA_DIR, MediaDirPath);
+        false ->
+            err("Directory '~s' does not exist", [MediaDirPath])
+    end;
+parse_args(["-l", Lang | Tail]) ->
+    set_env(?CFG_LANGUAGE, list_to_atom(Lang)),
+    parse_args(Tail);
+parse_args(["-i", String | Tail]) ->
+    case inet_parse:address(String) of
+        {ok, IP} ->
+            set_env(?CFG_TCP_BIND_ADDRESS, IP),
+            parse_args(Tail);
+        {error, _Reason} ->
+            err("Bad IP address: ~s", [String])
+    end;
+parse_args(["-p", String | Tail]) ->
+    TcpPortNumber =
+        try list_to_integer(String) of
+            Int when Int > 0, Int < 16#ffff ->
+                Int;
+            Other ->
+                err("Port number ~w out of range", [Other])
+        catch
+            _:_ ->
+                err("Bad port number: ~s", [String])
+        end,
+    set_env(?CFG_TCP_PORT_NUMBER, TcpPortNumber),
+    parse_args(Tail);
+parse_args(["--sasl" | Tail]) ->
+    ensure_app_started(sasl),
+    parse_args(Tail);
+parse_args(["--id", DaemonID | Tail]) ->
+    set_env(?CFG_DAEMON_ID, list_to_atom(DaemonID)),
+    parse_args(Tail);
+parse_args(Other) ->
+    err("Unrecognized option or arguments: ~p", [Other]).
+
+%% @doc Set environment for application.
+-spec set_env(Key :: atom(), Value :: any()) -> ok.
+set_env(Key, Value) ->
+    application:set_env(?MODULE, Key, Value).
+
+%% @doc Report something to stderr and halt.
+-spec err(Format :: string(), Args :: list()) -> no_return().
+err(Format, Args) ->
+    ok = io:format(standard_error, "Error: " ++ Format ++ "\n", Args),
+    halt(1).
+
+-spec load_app() -> ok | no_return().
+load_app() ->
+    case application:load(?MODULE) of
+        ok ->
+            ok;
+        {error, {already_loaded, ?MODULE}} ->
+            ok;
+        {error, Reason} ->
+            err("Failed to load application: ~p", [Reason])
+    end.
+
+-spec start_app() -> ok | no_return().
+start_app() ->
+    ensure_app_started(?MODULE).
+
+%% @doc Start application if not started yet.
+-spec ensure_app_started(Application :: atom()) -> ok | no_return().
+ensure_app_started(Application) ->
+    case application:start(Application, permanent) of
+        ok ->
+            ok;
+        {error, {already_started, Application}} ->
+            ok;
+        {error, Reason} ->
+            err("Failed to start ~w: ~p", [Application, Reason])
+    end.
+
+%% @doc Return epv version.
+-spec version() -> iolist().
+version() ->
+    ok = load_app(),
+    {ok, Version} = application:get_key(?MODULE, vsn),
+    Version.
+
+%% @doc Fetch essential files and directories from escript archive to
+%% given path.
+-spec deflate(DestinationPath :: file:filename()) -> ok | no_return().
+deflate(Destination) ->
+    {ok, Sections} = escript:extract(escript:script_name(), []),
+    {ok, ZipHandle} =
+        zip:zip_open(proplists:get_value(archive, Sections), [memory]),
+    {ok, AllFiles} = zip:zip_get(ZipHandle),
+    PrivFiles = [{N, D} || {N, D} <- AllFiles, lists:prefix("priv", N)],
+    ok = zip:zip_close(ZipHandle),
+    lists:foreach(
+      fun({Filename, Filebody}) ->
+              AbsFilename = filename:join(Destination, Filename),
+              ok = filelib:ensure_dir(AbsFilename),
+              ok = file:write_file(AbsFilename, Filebody)
+      end, PrivFiles).
 

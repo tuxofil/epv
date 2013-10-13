@@ -26,6 +26,13 @@ If all you need is just binaries, do:
 
     $ make compile
 
+## Running
+
+The easiest way to start it:
+
+    $ make epv
+    $ ./epv /path/to/your/media /path/where/epv/thumbs/will/be/stored
+
 ## Installing
 
 Sorry, there are no RPM or DEB packages yet, but you can

@@ -31,6 +31,15 @@ compile:
 	echo '["src/*"].' > Emakefile
 	erl -noinput -eval "up_to_date=make:all([$(COPTS)]),halt()"
 
+$(APP): compile
+	rm -f -- $(APP).zip
+	zip -j $(APP) ebin/*
+	zip $(APP) priv/epv.lang priv/*.png priv/www/*
+	erl -noinput -eval "{ok,ZipData}=file:read_file(\"$(APP).zip\"), \
+	   ok=escript:create(\"$(APP)\",[shebang,\
+	   {emu_args,\"-smp\"},{archive,ZipData}]),halt()"
+	chmod 755 $(APP)
+
 html:
 	sed "s/{{VERSION}}/$(VERSION)/" doc/overview.edoc.in > doc/overview.edoc
 	erl -noinput -eval \
@@ -64,6 +73,7 @@ all-tests:
 
 clean:
 	rm -rf -- ebin doc/*.html doc/*.css doc/*.png doc/edoc-info \
+	    $(APP).zip $(APP) \
 	    erl_crash.dump Emakefile doc/overview.edoc
 	find . -type f -name '*~' -delete
 	$(MAKE) -C test clean

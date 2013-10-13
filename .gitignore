@@ -13,3 +13,5 @@ priv/meta
 priv/media
 .dialyzer_plt
 erl_crash.dump
+epv
+epv.zip
