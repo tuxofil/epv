@@ -27,8 +27,13 @@
 %% supported file types
 
 -define(
-   SUPPORTED,
+   SUPPORTED_IMAGES,
    ["jpg", "jpeg", "png"
+   ]).
+
+-define(
+   SUPPORTED_VIDEO,
+   ["mp4", "mov", "3gp"
    ]).
 
 %% ----------------------------------------------------------------------

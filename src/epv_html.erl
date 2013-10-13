@@ -65,10 +65,16 @@ view(Directory, Filename, Files) ->
             end),
          td(["valign=top"],
             center(
-              a("/origin" ++ myjoin(Directory, Filename),
-                "<img src='/resized" ++ myjoin(Directory, Filename) ++ "' "
-                "border=1 "
-                "text='" ++ filename:rootname(Filename) ++ "'>"))),
+              case epv_media:is_video(Filename) of
+                  true ->
+                      video_block(Directory, Filename);
+                  false ->
+                      a("/origin" ++ myjoin(Directory, Filename),
+                        "<img src='/resized" ++
+                            myjoin(Directory, Filename) ++ "' "
+                        "border=1 text='" ++
+                            filename:rootname(Filename) ++ "'>")
+              end)),
          td(["valign=top", "width=32"],
             case next_item(Filename, Files) of
                 {ok, Next} ->
@@ -188,8 +194,9 @@ thumbs(Path, Files) ->
 -spec format_file(Path :: file:filename(), File :: file:filename()) ->
                          HTML :: iolist().
 format_file(Path, File) ->
+    ThumbFilename = filename:basename(epv_media:file2thumb(File)),
     a(myjoin(Path, File),
-      "<img src='/thumb" ++ myjoin(Path, File) ++ "' "
+      "<img src='/thumb" ++ myjoin(Path, ThumbFilename) ++ "' "
       "border=1 "
       "text='" ++ filename:rootname(File) ++ "'>").
 
@@ -203,6 +210,20 @@ myjoin(Path, File) ->
 %% ----------------------------------------------------------------------
 %% Internal functions
 %% ----------------------------------------------------------------------
+
+-spec video_block(Directory :: file:filename(),
+                  Filename :: file:filename()) -> HTML :: iolist().
+video_block(Directory, Filename) ->
+    [epv_lang:gettext(txt_download_video) ++ ": " ++
+         a("/origin" ++ myjoin(Directory, Filename),
+           ["target=video"], Filename),
+     "<br>",
+     tag(iframe,
+         ["name=video",
+          "frameborder=0",
+          "height=" ++ integer_to_list(?RESIZED_HEIGHT),
+          "width=" ++ integer_to_list(?RESIZED_WIDTH)
+         ], "")].
 
 -spec html_page_header(Title :: string()) -> HTML :: iolist().
 html_page_header(Title) ->

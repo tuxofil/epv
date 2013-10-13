@@ -24,7 +24,8 @@
     visible/1,
     forbidden/1,
     hide/1, unhide/1,
-    forbid/1, permit/1
+    forbid/1, permit/1,
+    is_video/1
    ]).
 
 -include("epv.hrl").
@@ -122,7 +123,8 @@ exists(Filename) ->
 is_supported(Filename) ->
     case filename:extension(Filename) of
         "." ++ Extension ->
-            lists:member(string:to_lower(Extension), ?SUPPORTED);
+            lists:member(string:to_lower(Extension),
+                         ?SUPPORTED_IMAGES ++ ?SUPPORTED_VIDEO);
         _ -> false
     end.
 
@@ -130,7 +132,12 @@ is_supported(Filename) ->
 -spec file2thumb(Filename :: file:filename()) ->
                         ThumbFilename :: file:filename().
 file2thumb(Filename) ->
-    filename:join(thumb_dir(), Filename).
+    case is_video(Filename) of
+        true ->
+            filename:join(thumb_dir(), Filename) ++ ".jpg";
+        false ->
+            filename:join(thumb_dir(), Filename)
+    end.
 
 %% @doc Return absolute filename for resized image.
 -spec file2resized(Filename :: file:filename()) ->
@@ -142,19 +149,34 @@ file2resized(Filename) ->
 -spec create_thumb_if_needed(Filename :: file:filename()) ->
                                     ok | {error, Reason :: any()}.
 create_thumb_if_needed(Filename) ->
-    ThumbFilename = file2thumb(Filename),
-    case filelib:is_regular(ThumbFilename) of
+    OriginPath = get_origin_filename(file2abs(Filename)),
+    IsVideo = is_video(OriginPath),
+    ThumbPath = file2thumb(Filename),
+    case filelib:is_regular(ThumbPath) of
         true -> ok;
+        false when IsVideo ->
+            ok = filelib:ensure_dir(ThumbPath),
+            _IgnoredStdout =
+                os:cmd(
+                  io_lib:format(
+                    "ffmpeg -y -v quiet -i \"~s\" -vcodec mjpeg"
+                    " -vframes 1 -an -f rawvideo -s ~wx~w - |"
+                    " composite -gravity SouthWest \"~s\" - \"~s\"",
+                    [OriginPath,
+                     ?THUMB_WIDTH, ?THUMB_HEIGHT,
+                     epv_lib:in_priv("video-x-generic.png"),
+                     ThumbPath])),
+            ok;
         false ->
-            ok = filelib:ensure_dir(ThumbFilename),
+            ok = filelib:ensure_dir(ThumbPath),
             _IgnoredStdout =
                 os:cmd(
                   io_lib:format(
                     "convert \"~s\" "
                     "-thumbnail ~wx~w -strip -auto-orient \"~s\"",
-                    [file2abs(Filename),
+                    [OriginPath,
                      ?THUMB_WIDTH, ?THUMB_HEIGHT,
-                     ThumbFilename])),
+                     ThumbPath])),
             ok
     end.
 
@@ -286,9 +308,33 @@ permit(Filename) ->
             ok = set_meta(Filename, proplist_set(permissions, NewPermissions, Meta))
     end.
 
+-spec is_video(Filename :: file:filename()) -> boolean().
+is_video(Filename) ->
+    [$. | Extension] = filename:extension(Filename),
+    lists:member(string:to_lower(Extension), ?SUPPORTED_VIDEO).
+
 %% ----------------------------------------------------------------------
 %% Internal functions
 %% ----------------------------------------------------------------------
+
+%% @doc Get the origin filename for the given thumbnail filename.
+-spec get_origin_filename(ThumbFilename :: file:filename()) ->
+                                 OriginFilename :: file:filename().
+get_origin_filename(ThumbFilename) ->
+    Dir = epv_lib:cfg(?CFG_MEDIA_DIR),
+    OriginFilename = filename:join(Dir, ThumbFilename),
+    case filelib:is_regular(OriginFilename) of
+        true ->
+            OriginFilename;
+        false ->
+            case lists:suffix(".jpg", ThumbFilename) of
+                true ->
+                    lists:sublist(
+                      ThumbFilename, length(ThumbFilename) - 4);
+                false ->
+                    ThumbFilename
+            end
+    end.
 
 -spec proplist_set(Key :: atom(), NewValue :: any(),
                    Proplist :: [{Key :: atom(), Value :: any()}]) ->

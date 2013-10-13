@@ -11,7 +11,8 @@ and resized pictures, are kept in a separate location).
 
 * erlang;
 * erlang-inets;
-* imagemagick.
+* imagemagick;
+* ffmpeg (for video support).
 
 To build HTML documentation, you need erlang-edoc.
 
