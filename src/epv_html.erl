@@ -74,7 +74,8 @@ view(Directory, Filename, Files) ->
                             myjoin(Directory, Filename) ++ "' "
                         "border=1 text='" ++
                             filename:rootname(Filename) ++ "'>")
-              end)),
+              end) ++
+                tags_block(filename:join(Directory, Filename))),
          td(["valign=top", "width=32"],
             case next_item(Filename, Files) of
                 {ok, Next} ->
@@ -224,6 +225,23 @@ video_block(Directory, Filename) ->
           "height=" ++ integer_to_list(?RESIZED_HEIGHT),
           "width=" ++ integer_to_list(?RESIZED_WIDTH)
          ], "")].
+
+-spec tags_block(Filename :: file:filename()) -> HTML :: iolist().
+tags_block(Filename) ->
+    case epv_lib:cfg(?CFG_SHOW_TAGS) of
+        true ->
+            case epv_media:get_tags(Filename) of
+                {ok, MetaInfo} ->
+                    ["<hr>",
+                     tag(textarea,
+                         ["readonly", "rows=20", "cols=80",
+                          "wrap=hard"], [MetaInfo])];
+                {error, _Reason} ->
+                    ""
+            end;
+        false ->
+            ""
+    end.
 
 -spec html_page_header(Title :: string()) -> HTML :: iolist().
 html_page_header(Title) ->

@@ -195,7 +195,9 @@ usage() ->
       "\t-h, --help  - show this memo;~n"
       "\t-l Language - use given Language. Default is 'en' (English);~n"
       "\t-i Addr     - IP address to bind to. Default is 0.0.0.0 (any);~n"
-      "\t-p Port     - TCP port number to bind to. Default is 8080.~n"
+      "\t-p Port     - TCP port number to bind to. Default is 8080;~n"
+      "\t--no-tags   - do not show meta info for media files at the~n"
+      "\t              bottom of the page.~n"
       "~n"
       "Additional options:~n"
       "\t--sasl      - start SASL;~n"
@@ -214,6 +216,9 @@ parse_args(["-h" | _]) ->
     usage();
 parse_args(["--help" | _]) ->
     usage();
+parse_args(["--no-tags" | Tail]) ->
+    set_env(?CFG_SHOW_TAGS, false),
+    parse_args(Tail);
 parse_args([MediaDirPath, MetaDirPath]) ->
     case filelib:is_dir(MediaDirPath) of
         true ->

@@ -11,6 +11,9 @@
    %% Local TCP port number to listen to
    {tcp_port_number, @@TCP_PORT@@},
 
+   %% Show media files metainfo at the bottom of page or not
+   %{show_tags, true},
+
    %% Directory to publish
    {media_dir, "@@MEDIA_DIR@@"},
 
@@ -21,7 +24,7 @@
    %{www_dir, "priv/www"},
 
    %% Language
-   %% {language, en},
+   %{language, en},
 
    %% mime types definitions filename
    %{mime_types, "/etc/mime.types"}

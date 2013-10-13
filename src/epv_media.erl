@@ -17,6 +17,7 @@
     file2resized/1,
     create_thumb_if_needed/1,
     create_resized_if_needed/1,
+    get_tags/1,
     thumb_dir/0,
     resized_dir/0,
     set_meta/2,
@@ -139,11 +140,47 @@ file2thumb(Filename) ->
             filename:join(thumb_dir(), Filename)
     end.
 
+%% @doc Return absolute filename for file with media file tags.
+-spec file2tags(Filename :: file:filename()) ->
+                       TagsFilename :: file:filename().
+file2tags(Filename) ->
+    filename:join(tags_dir(), Filename).
+
 %% @doc Return absolute filename for resized image.
 -spec file2resized(Filename :: file:filename()) ->
                           ResizedFilename :: file:filename().
 file2resized(Filename) ->
     filename:join(resized_dir(), Filename).
+
+%% @doc Return meta information for given media file. Fetched
+%% information will be cached in meta directory to make next
+%% access faster.
+-spec get_tags(Filename :: file:filename()) ->
+                      {ok, MetaInfo :: binary()} | {error, Reason :: any()}.
+get_tags(Filename) ->
+    OriginPath = file2abs(Filename),
+    IsVideo = is_video(OriginPath),
+    TagsPath = file2tags(Filename),
+    case filelib:is_regular(TagsPath) of
+        true ->
+            file:read_file(TagsPath);
+        false when IsVideo ->
+            ok = filelib:ensure_dir(TagsPath),
+            _IgnoredStdout =
+                os:cmd(
+                  io_lib:format(
+                    "ffmpeg -y -v quiet -i \"~s\" -f ffmetadata \"~s\"",
+                    [OriginPath, TagsPath])),
+            file:read_file(TagsPath);
+        false ->
+            ok = filelib:ensure_dir(TagsPath),
+            _IgnoredStdout =
+                os:cmd(
+                  io_lib:format(
+                    "identify -verbose \"~s\" > \"~s\"",
+                    [OriginPath, TagsPath])),
+            file:read_file(TagsPath)
+    end.
 
 %% @doc Create thumbnail if it is not exists yet.
 -spec create_thumb_if_needed(Filename :: file:filename()) ->
@@ -211,6 +248,12 @@ thumb_dir() ->
 -spec resized_dir() -> Directory :: file:filename().
 resized_dir() ->
     filename:join(epv_lib:cfg(?CFG_META_DIR), "resized").
+
+%% @doc Return absolute path for directory where tags (metainfo) will
+%% be stored.
+-spec tags_dir() -> Directory :: file:filename().
+tags_dir() ->
+    filename:join(epv_lib:cfg(?CFG_META_DIR), "tags").
 
 %% @doc Set meta data for file.
 -spec set_meta(Filename :: file:filename(), Meta :: meta()) ->
