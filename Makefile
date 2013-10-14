@@ -35,9 +35,9 @@ $(APP): compile
 	rm -f -- $(APP).zip
 	zip -j $(APP) ebin/*
 	zip $(APP) priv/epv.lang priv/*.png priv/www/*
-	erl -noinput -eval "{ok,ZipData}=file:read_file(\"$(APP).zip\"), \
-	   ok=escript:create(\"$(APP)\",[shebang,\
-	   {emu_args,\"-smp\"},{archive,ZipData}]),halt()"
+	{ echo '#!/usr/bin/env escript'; \
+	  echo '%%!-smp'; \
+	  cat $(APP).zip; } > $(APP)
 	chmod 755 $(APP)
 
 html:
