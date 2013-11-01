@@ -201,6 +201,8 @@ usage() ->
       "\t              bottom of the page;~n"
       "\t--log LogPath - write logs to the specified file;~n"
       "\t-v Loglevel - log severity threshold. Default is 'info'.~n"
+      "\t              Valid values: debug, info, warning, error,~n"
+      "\t                            critical, none."
       "~n"
       "Additional options:~n"
       "\t--sasl      - start SASL;~n"
