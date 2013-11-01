@@ -21,7 +21,13 @@
             StartArgs :: any()) ->
                    {ok, Pid :: pid()} | {error, Reason :: any()}.
 start(_StartType, _StartArgs) ->
-    epv_sup:start_link().
+    case epv_sup:start_link() of
+        {ok, _Pid} = Ok ->
+            ok = epv_log:inf("started", []),
+            Ok;
+        {error, _Reason} = Error ->
+            Error
+    end.
 
 %% @hidden
 -spec start_phase(Phase :: atom(), StartType :: application:start_type(),

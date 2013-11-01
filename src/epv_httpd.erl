@@ -85,6 +85,7 @@ do(ModData) ->
                   [Type, Reason, erlang:get_stacktrace()])}}]}
     end.
 do_(ModData) ->
+    ok = epv_log:inf("~s ~s", [ModData#mod.method, ModData#mod.request_uri]),
     case ModData#mod.request_uri of
         "/res/" ++ ResFile0 when ModData#mod.method == ?HTTP_GET ->
             %% serve static file

@@ -2,7 +2,7 @@
 -define(_EPV, true).
 
 %% ----------------------------------------------------------------------
-%% configuration params and their default values
+%% configuration params
 
 -define(CFG_TCP_BIND_ADDRESS, tcp_bind_address).
 -define(CFG_TCP_PORT_NUMBER, tcp_port_number).
@@ -11,8 +11,25 @@
 -define(CFG_CACHE_DIR, cache_dir).
 -define(CFG_LANGUAGE, language).
 -define(CFG_MIME_TYPES, mime_types).
+-define(CFG_LOG_PATH, log_path).
+-define(CFG_LOGLEVEL, loglevel).
 
 -define(CFG_DAEMON_ID, daemon_id).
+
+%% ----------------------------------------------------------------------
+%% log levels
+
+-define(NONE, none).
+-define(DEBUG, debug).
+-define(INFO, info).
+-define(WARNING, warning).
+-define(ERROR, error).
+-define(CRITICAL, critical).
+
+-define(LOGLEVELS, [?DEBUG, ?INFO, ?WARNING, ?ERROR, ?CRITICAL, ?NONE]).
+
+%% ----------------------------------------------------------------------
+%% default values for configuration options
 
 -define(
    DEFAULTS,
@@ -20,7 +37,9 @@
     {?CFG_TCP_PORT_NUMBER,  8080},
     {?CFG_SHOW_TAGS,        true},
     {?CFG_LANGUAGE,         en},
-    {?CFG_MIME_TYPES,       "/etc/mime.types"}
+    {?CFG_MIME_TYPES,       "/etc/mime.types"},
+    {?CFG_LOG_PATH,         undefined},
+    {?CFG_LOGLEVEL,         ?INFO}
    ]).
 
 %% ----------------------------------------------------------------------

@@ -51,6 +51,8 @@ stop() ->
 -spec hup() -> ok.
 hup() ->
     ok = reload_configs(),
+    ok = epv_log:hup(),
+    ok = epv_priv:hup(),
     ok = epv_lang:hup(),
     ok = epv_mime_types:hup(),
     ok = epv_httpd_warden:hup(),
@@ -137,7 +139,7 @@ main(Args) ->
         {ok, _Pid} ->
             ok;
         {error, Reason} ->
-            err("Failed to start Erlang Distribution: ~p", [Reason])
+            err("Failed to start Erlang Distribution:~n~p", [Reason])
     end,
     ok = start_app(),
     ok = timer:sleep(infinity).
@@ -196,7 +198,9 @@ usage() ->
       "\t-i Addr     - IP address to bind to. Default is 0.0.0.0 (any);~n"
       "\t-p Port     - TCP port number to bind to. Default is 8080;~n"
       "\t--no-tags   - do not show meta info for media files at the~n"
-      "\t              bottom of the page.~n"
+      "\t              bottom of the page;~n"
+      "\t--log LogPath - write logs to the specified file;~n"
+      "\t-v Loglevel - log severity threshold. Default is 'info'.~n"
       "~n"
       "Additional options:~n"
       "\t--sasl      - start SASL;~n"
@@ -252,6 +256,19 @@ parse_args(["-p", String | Tail]) ->
     parse_args(Tail);
 parse_args(["--sasl" | Tail]) ->
     ensure_app_started(sasl),
+    parse_args(Tail);
+parse_args(["--log", LogPath | Tail]) ->
+    set_env(?CFG_LOG_PATH, LogPath),
+    parse_args(Tail);
+parse_args(["-v", LoglevelStr | Tail]) ->
+    Loglevel = list_to_atom(string:to_lower(LoglevelStr)),
+    case lists:member(Loglevel, ?LOGLEVELS) of
+        true ->
+            ok;
+        false ->
+            err("Bad loglevel: ~s", [LoglevelStr])
+    end,
+    set_env(?CFG_LOGLEVEL, Loglevel),
     parse_args(Tail);
 parse_args(["--id", DaemonID | Tail]) ->
     set_env(?CFG_DAEMON_ID, list_to_atom(DaemonID)),

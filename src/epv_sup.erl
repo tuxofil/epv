@@ -41,6 +41,10 @@ init(_Args) ->
     {ok,
      {{one_for_one, 5, 1},
       [
+       %% logger
+       {epv_log, {epv_log, start_link, []},
+        permanent, 100, worker, [epv_log]
+       },
        %% priv filesystem
        {epv_priv, {epv_priv, start_link, []},
         permanent, 100, worker, [epv_priv]
