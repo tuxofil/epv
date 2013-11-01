@@ -21,6 +21,7 @@
 -ifdef(WITH_INETS_HEADER).
 -include_lib("inets/include/httpd.hrl").
 -else.
+%% early versions of Erlang on Debian didn't provide inets/include/httpd.hrl
 -record(mod,
         {init_data,
          data=[],
@@ -55,8 +56,8 @@ start_link() ->
            true -> BindAddr
         end},
        {server_name, "epv"},
-       {server_root, epv_lib:cfg(?CFG_WWW_DIR)},
-       {document_root, epv_lib:cfg(?CFG_WWW_DIR)},
+       {server_root, "."},
+       {document_root, "."},
        {ipfamily, inet},
        {modules, [?MODULE]}
       ], stand_alone).
@@ -88,20 +89,20 @@ do_(ModData) ->
         "/res/" ++ ResFile0 when ModData#mod.method == ?HTTP_GET ->
             %% serve static file
             {ResFile, _} = split4pathNquery(ResFile0),
-            serve_file(ModData, {epv_lib:cfg(?CFG_WWW_DIR), ResFile});
+            serve_internal_file(ModData, ResFile);
+        "/favicon.ico" ++ _ when ModData#mod.method == ?HTTP_GET ->
+            serve_internal_file(ModData, "favicon.ico");
         "/thumb/" ++ File0 when ModData#mod.method == ?HTTP_GET ->
             {File, _} = split4pathNquery(epv_lib:url_decode(File0)),
             ok = epv_media:create_thumb_if_needed(File),
-            serve_file(ModData, {epv_media:thumb_dir(), File});
+            serve_real_file(ModData, {epv_media:thumb_dir(), File});
         "/resized/" ++ File0 when ModData#mod.method == ?HTTP_GET ->
             {File, _} = split4pathNquery(epv_lib:url_decode(File0)),
             ok = epv_media:create_resized_if_needed(File),
-            serve_file(ModData, {epv_media:resized_dir(), File});
+            serve_real_file(ModData, {epv_media:resized_dir(), File});
         "/origin/" ++ File0 when ModData#mod.method == ?HTTP_GET ->
             {File, _} = split4pathNquery(epv_lib:url_decode(File0)),
-            serve_file(ModData, {epv_lib:cfg(?CFG_MEDIA_DIR), File});
-        "/favicon.ico" ++ _ when ModData#mod.method == ?HTTP_GET ->
-            serve_file(ModData, {epv_lib:cfg(?CFG_WWW_DIR), "favicon.ico"});
+            serve_real_file(ModData, {epv_lib:cfg(?CFG_MEDIA_DIR), File});
         _ ->
             {Path, GetQueryString} =
                 split4pathNquery(
@@ -132,12 +133,14 @@ remove(_ConfigDB) -> ok.
 %% ----------------------------------------------------------------------
 
 %% @doc Splits request URI to Path and Query strings (delimited by '?').
-%% @spec split4pathNquery(RequestURI) -> {Path, Query}
-%%     RequestURI = string(),
-%%     Path = string(),
-%%     Query = string()
+-spec split4pathNquery(RequestURI :: string()) ->
+                              {Path :: string(), Query :: string()}.
 split4pathNquery(RequestURI) ->
     split4pathNquery(RequestURI, []).
+
+%% @doc
+-spec split4pathNquery(RequestURI :: string(), Acc :: string()) ->
+                              {Path :: string(), Query :: string()}.
 split4pathNquery([$? | Tail], Path) ->
     {lists:reverse(Path), Tail};
 split4pathNquery([H | Tail], Path) ->
@@ -147,16 +150,17 @@ split4pathNquery(_, Path) ->
 
 -define(mime_text_html, "text/html").
 
--spec serve_file(ModData :: #mod{},
-                 Path ::
-                   ({BaseDir :: file:filename(),
-                     Filename :: file:filename()} |
-                    (Filename :: file:filename()))) ->
-                        {proceed, NewData :: list()} |
-                        {break, NewData :: list()}.
-serve_file(ModData, {BaseDir, Filename}) ->
-    serve_file(ModData, filename:join(BaseDir, Filename));
-serve_file(ModData, Filename) ->
+%% @doc
+-spec serve_real_file(ModData :: #mod{},
+                      Path ::
+                        ({BaseDir :: file:filename(),
+                          Filename :: file:filename()} |
+                         (Filename :: file:filename()))) ->
+                             {proceed, NewData :: list()} |
+                             {break, NewData :: list()}.
+serve_real_file(ModData, {BaseDir, Filename}) ->
+    serve_real_file(ModData, filename:join(BaseDir, Filename));
+serve_real_file(ModData, Filename) ->
     MimeType =
         epv_mime_types:lookup(
           epv_lib:strip(filename:extension(Filename), ".")),
@@ -193,6 +197,48 @@ serve_file(ModData, Filename) ->
                 epv_lang:gettext(txt_error)}}]}
     end.
 
+%% @doc
+-spec serve_internal_file(ModData :: #mod{}, Path :: file:filename()) ->
+                                 {proceed, NewData :: list()} |
+                                 {break, NewData :: list()}.
+serve_internal_file(ModData, Path) ->
+    WwwPath = filename:join("www", Path),
+    MimeType =
+        epv_mime_types:lookup(epv_lib:strip(filename:extension(Path), ".")),
+    case epv_priv:read_file_info(WwwPath) of
+        {ok, FileInfo} ->
+            Headers =
+                [{content_type, MimeType},
+                 {content_length,
+                  integer_to_list(FileInfo#file_info.size)},
+                 {last_modified,
+                  httpd_util:rfc1123_date(FileInfo#file_info.mtime)}
+                ],
+            case epv_priv:read_file(WwwPath) of
+                {ok, Binary} ->
+                    httpd_response:send_header(ModData, 200, Headers),
+                    httpd_socket:deliver(
+                      ModData#mod.socket_type,
+                      ModData#mod.socket, Binary),
+                    {proceed,
+                     [{response,
+                       {already_sent, 200, FileInfo#file_info.size}},
+                      {mime_type, MimeType} |
+                      ModData#mod.data]};
+                {error, _Reason} ->
+                    {break,
+                     [{response,
+                       {404,
+                        epv_lang:gettext(txt_error)}}]}
+            end;
+        {error, _Reason} ->
+            {break,
+             [{response,
+               {404,
+                epv_lang:gettext(txt_error)}}]}
+    end.
+
+%% @doc
 -spec parse_cookies(ModData :: #mod{}) ->
                            Cookies :: [{Key :: nonempty_string(),
                                         Value :: string()}].
@@ -210,6 +256,7 @@ parse_cookies(ModData) ->
           "cookie", ModData#mod.parsed_header, []),
         ";")).
 
+%% @doc
 -spec process(ModData :: #mod{}, Path :: string(), Query :: any()) ->
                      {proceed, NewData :: list()}.
 process(ModData, Path, _Query) ->

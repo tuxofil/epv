@@ -16,6 +16,7 @@
                   epv_httpd_warden,
                   epv_html,
                   epv_media,
+                  epv_priv,
                   epv_lib
                  ]},
   {registered,   [epv_sup,

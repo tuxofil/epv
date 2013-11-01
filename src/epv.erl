@@ -132,14 +132,13 @@ main(Args) ->
             undefined ->
                 ?MODULE
         end,
+    _IgnoredStdout = os:cmd("epmd -address 127.0.0.1 -daemon"),
     case net_kernel:start([DaemonID, shortnames]) of
         {ok, _Pid} ->
             ok;
         {error, Reason} ->
             err("Failed to start Erlang Distribution: ~p", [Reason])
     end,
-    {ok, PrivDir} = application:get_env(?MODULE, ?CFG_PRIV_DIR),
-    ok = deflate(filename:dirname(PrivDir)),
     ok = start_app(),
     ok = timer:sleep(infinity).
 
@@ -190,7 +189,7 @@ set_envs(App, NewEnv) ->
 usage() ->
     io:format(
       "Erlang Photo Viewer v.~s~n~n"
-      "Usage: ~s [options] MediaDirectoryPath MetaDirectoryPath~n~n"
+      "Usage: ~s [options] MediaDirectoryPath CacheDirectoryPath~n~n"
       "Options:~n"
       "\t-h, --help  - show this memo;~n"
       "\t-l Language - use given Language. Default is 'en' (English);~n"
@@ -219,11 +218,10 @@ parse_args(["--help" | _]) ->
 parse_args(["--no-tags" | Tail]) ->
     set_env(?CFG_SHOW_TAGS, false),
     parse_args(Tail);
-parse_args([MediaDirPath, MetaDirPath]) ->
+parse_args([MediaDirPath, CacheDirPath]) ->
     case filelib:is_dir(MediaDirPath) of
         true ->
-            set_env(?CFG_META_DIR, filename:join(MetaDirPath, "meta")),
-            set_env(?CFG_PRIV_DIR, filename:join(MetaDirPath, "priv")),
+            set_env(?CFG_CACHE_DIR, CacheDirPath),
             set_env(?CFG_MEDIA_DIR, MediaDirPath);
         false ->
             err("Directory '~s' does not exist", [MediaDirPath])
@@ -305,21 +303,4 @@ version() ->
     ok = load_app(),
     {ok, Version} = application:get_key(?MODULE, vsn),
     Version.
-
-%% @doc Fetch essential files and directories from escript archive to
-%% given path.
--spec deflate(DestinationPath :: file:filename()) -> ok | no_return().
-deflate(Destination) ->
-    {ok, Sections} = escript:extract(escript:script_name(), []),
-    {ok, ZipHandle} =
-        zip:zip_open(proplists:get_value(archive, Sections), [memory]),
-    {ok, AllFiles} = zip:zip_get(ZipHandle),
-    PrivFiles = [{N, D} || {N, D} <- AllFiles, lists:prefix("priv", N)],
-    ok = zip:zip_close(ZipHandle),
-    lists:foreach(
-      fun({Filename, Filebody}) ->
-              AbsFilename = filename:join(Destination, Filename),
-              ok = filelib:ensure_dir(AbsFilename),
-              ok = file:write_file(AbsFilename, Filebody)
-      end, PrivFiles).
 

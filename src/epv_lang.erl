@@ -24,6 +24,18 @@
 -record(state, {}).
 
 %% ----------------------------------------------------------------------
+%% Type definitions
+%% ----------------------------------------------------------------------
+
+-type lang_config() ::
+        {Languages :: [{LangID :: atom(),
+                        LangName :: nonempty_string()}],
+         TextItems :: [lang_config_text_item()]}.
+
+-type lang_config_text_item() ::
+        {TextItemID :: atom(), LangID2StringMap :: dict()}.
+
+%% ----------------------------------------------------------------------
 %% Internal signals and keywords
 %% ----------------------------------------------------------------------
 
@@ -124,11 +136,53 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal functions
 %% ----------------------------------------------------------------------
 
+%% @doc
+-spec do_read() -> lang_config().
 do_read() ->
-    do_read(epv_lib:in_priv("epv.lang")).
-
-do_read(Filename) ->
-    {ok, List} = file:consult(Filename),
+    {ok, Binary} = epv_priv:read_file("epv.lang"),
+    List = string_to_terms(binary_to_list(Binary)),
     {proplists:get_value(languages, List),
      [{ID, dict:from_list(L)} || {text, ID, L} <- List]}.
+
+%% @doc
+-spec string_to_terms(String :: string()) -> [Term :: any()].
+string_to_terms(String) ->
+    {ok, Tokens, _EndLocation} = erl_scan:string(String),
+    [begin
+         {ok, Term} = erl_parse:parse_term(TermTokens),
+         Term
+     end || TermTokens <- explode_tokens(Tokens)].
+
+%% @doc
+-spec explode_tokens(Tokens :: erl_scan:tokens()) ->
+                            [TermTokens :: erl_scan:tokens()].
+explode_tokens(Tokens) ->
+    explode_tokens(Tokens, _Acc = []).
+
+%% @doc
+-spec explode_tokens(Tokens :: erl_scan:tokens(),
+                     Acc :: [TermTokens :: erl_scan:tokens()]) ->
+                            [TermTokens :: erl_scan:tokens()].
+explode_tokens([], Acc) ->
+    lists:reverse(Acc);
+explode_tokens(Tokens, Acc) ->
+    {TermTokens, Tail} = split_tokens(Tokens),
+    explode_tokens(Tail, [TermTokens | Acc]).
+
+%% @doc
+-spec split_tokens(Tokens :: erl_scan:tokens()) ->
+                          {TermTokens :: erl_scan:tokens(),
+                           RestOfTokens :: erl_scan:tokens()}.
+split_tokens(Tokens) ->
+    split_tokens(Tokens, _Acc = []).
+
+%% @doc
+-spec split_tokens(Tokens :: erl_scan:tokens(),
+                   Acc :: erl_scan:tokens()) ->
+                          {TermTokens :: erl_scan:tokens(),
+                           RestOfTokens :: erl_scan:tokens()}.
+split_tokens([{dot, _} = Dot | Tail], Acc) ->
+    {lists:reverse([Dot | Acc]), Tail};
+split_tokens([Token | Tail], Acc) ->
+    split_tokens(Tail, [Token | Acc]).
 

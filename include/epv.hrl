@@ -8,12 +8,10 @@
 -define(CFG_TCP_PORT_NUMBER, tcp_port_number).
 -define(CFG_SHOW_TAGS, show_tags).
 -define(CFG_MEDIA_DIR, media_dir).
--define(CFG_META_DIR, meta_dir).
+-define(CFG_CACHE_DIR, cache_dir).
 -define(CFG_LANGUAGE, language).
--define(CFG_WWW_DIR, www_dir).
 -define(CFG_MIME_TYPES, mime_types).
 
--define(CFG_PRIV_DIR, priv_dir).
 -define(CFG_DAEMON_ID, daemon_id).
 
 -define(
@@ -21,10 +19,7 @@
    [{?CFG_TCP_BIND_ADDRESS, {0,0,0,0}},
     {?CFG_TCP_PORT_NUMBER,  8080},
     {?CFG_SHOW_TAGS,        true},
-    {?CFG_MEDIA_DIR,        fun() -> epv_lib:in_priv("media") end},
-    {?CFG_META_DIR,         fun() -> epv_lib:in_priv("meta") end},
     {?CFG_LANGUAGE,         en},
-    {?CFG_WWW_DIR,          fun() -> epv_lib:in_priv("www") end},
     {?CFG_MIME_TYPES,       "/etc/mime.types"}
    ]).
 

@@ -201,7 +201,7 @@ create_thumb_if_needed(Filename) ->
                     " composite -gravity SouthWest \"~s\" - \"~s\"",
                     [OriginPath,
                      ?THUMB_WIDTH, ?THUMB_HEIGHT,
-                     epv_lib:in_priv("video-x-generic.png"),
+                     epv_priv:readlink("video-x-generic.png"),
                      ThumbPath])),
             ok;
         false ->
@@ -241,19 +241,19 @@ create_resized_if_needed(Filename) ->
 %% be stored.
 -spec thumb_dir() -> Directory :: file:filename().
 thumb_dir() ->
-    filename:join(epv_lib:cfg(?CFG_META_DIR), "thumbs").
+    filename:join(epv_lib:cfg(?CFG_CACHE_DIR), "thumbs").
 
 %% @doc Return absolute path for directory where resized images will
 %% be stored.
 -spec resized_dir() -> Directory :: file:filename().
 resized_dir() ->
-    filename:join(epv_lib:cfg(?CFG_META_DIR), "resized").
+    filename:join(epv_lib:cfg(?CFG_CACHE_DIR), "resized").
 
 %% @doc Return absolute path for directory where tags (metainfo) will
 %% be stored.
 -spec tags_dir() -> Directory :: file:filename().
 tags_dir() ->
-    filename:join(epv_lib:cfg(?CFG_META_DIR), "tags").
+    filename:join(epv_lib:cfg(?CFG_CACHE_DIR), "tags").
 
 %% @doc Set meta data for file.
 -spec set_meta(Filename :: file:filename(), Meta :: meta()) ->
@@ -395,5 +395,5 @@ file2meta(Filename) ->
 
 -spec meta_info_dir() -> MetaDir :: file:filename().
 meta_info_dir() ->
-    filename:join(epv_lib:cfg(?CFG_META_DIR), "info").
+    filename:join(epv_lib:cfg(?CFG_CACHE_DIR), "info").
 

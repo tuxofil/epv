@@ -41,6 +41,10 @@ init(_Args) ->
     {ok,
      {{one_for_one, 5, 1},
       [
+       %% priv filesystem
+       {epv_priv, {epv_priv, start_link, []},
+        permanent, 100, worker, [epv_priv]
+       },
        %% language info keeper
        {epv_lang, {epv_lang, start_link, []},
         permanent, 100, worker, [epv_lang]

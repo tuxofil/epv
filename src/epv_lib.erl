@@ -10,7 +10,6 @@
 %% API exports
 -export(
    [cfg/1,
-    in_priv/1,
     strip/2,
     url_decode/1
    ]).
@@ -27,16 +26,8 @@ cfg(Key) when is_atom(Key) ->
     case application:get_env(epv, Key) of
         {ok, Value} -> Value;
         undefined ->
-            case hd([V || {K, V} <- ?DEFAULTS, K == Key]) of
-                Fun when is_function(Fun) -> Fun();
-                Value -> Value
-            end
+            hd([V || {K, V} <- ?DEFAULTS, K == Key])
     end.
-
-%% @doc Return absolute filename for file located in epv priv directory.
--spec in_priv(Basename :: file:filename()) -> AbsFilename :: file:filename().
-in_priv(Basename) ->
-    filename:join(priv_dir(), Basename).
 
 %% @doc Removes Characters from beginning and ending of String.
 -spec strip(Subject :: string(), Characters :: string()) -> Stripped :: string().
@@ -66,16 +57,4 @@ url_decode([C | Tail]) ->
 %% ----------------------------------------------------------------------
 %% Internal functions
 %% ----------------------------------------------------------------------
-
--spec priv_dir() -> PrivDirPath :: file:filename().
-priv_dir() ->
-    case application:get_env(epv, ?CFG_PRIV_DIR) of
-        {ok, Path} ->
-            Path;
-        undefined ->
-            case code:lib_dir(epv, priv) of
-                {error, bad_name} -> "priv";
-                Path -> Path
-            end
-    end.
 
