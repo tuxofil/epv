@@ -102,6 +102,10 @@ get_state() ->
 init(_Args) ->
     process_flag(trap_exit, true),
     ok = hup(),
+    {ok, _TRef} =
+        timer:apply_interval(
+          1000 * 60, %% every minute
+          ?MODULE, hup, []),
     {ok, #state{}}.
 
 %% @hidden
