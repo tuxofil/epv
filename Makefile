@@ -72,7 +72,7 @@ all-tests:
 
 clean:
 	rm -rf -- ebin doc/*.html doc/*.css doc/*.png doc/edoc-info \
-	    $(APP).zip $(APP) \
+	    $(APP).zip $(APP) *.log \
 	    erl_crash.dump Emakefile doc/overview.edoc
 	find . -type f -name '*~' -delete
 	$(MAKE) -C test clean
