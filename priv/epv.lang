@@ -11,10 +11,6 @@
 %% ----------------------------------------------------------------------
 %% Common navigation
 
-{text, txt_home,
- [{en, "Home"},
-  {ru, "Главная"}]}.
-
 {text, txt_download_video,
  [{en, "Direct link (click to play/download)"},
   {ru, "Прямая ссылка (кликнуть для воспроизведения/загрузки)"}]}.
