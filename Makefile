@@ -54,13 +54,12 @@ eunit:
 		-eval 'ok=eunit:test({application,$(APP)},[verbose]),halt()'
 
 PLT = .dialyzer_plt
+DIALYZER_OPTS = -Wunmatched_returns -Werror_handling -Wrace_conditions
 
 dialyze: $(PLT)
-	dialyzer --src --plt $< -r . \
-		-Wunmatched_returns -Werror_handling -Wrace_conditions
+	dialyzer --plt $< -r . $(DIALYZER_OPTS) --src
 	$(MAKE) DEBUG=y clean compile
-	dialyzer --plt $< -r . \
-		-Wunmatched_returns -Werror_handling -Wrace_conditions
+	dialyzer --plt $< -r . $(DIALYZER_OPTS)
 
 $(PLT):
 	dialyzer --build_plt --output_plt $@ \
