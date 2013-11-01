@@ -100,14 +100,15 @@ debian-install:
 	$(MAKE) DESTDIR=/usr/lib/erlang/lib install
 	$(MAKE) DESTDIR=/usr/share/doc/erlang-$(APP) install-doc
 	$(MAKE) DESTDIR=/usr/share/doc/erlang-$(APP)/html install-html
-	cat etc/app.config-template | \
+	cat pkg.d/app.config-template | \
 	    sed 's#@@BIND_IP@@#any#' | \
 	    sed 's#@@TCP_PORT@@#8080#' | \
 	    sed 's#@@MEDIA_DIR@@#/var/lib/$(APP)/media#' | \
-	    sed 's#@@META_DIR@@#/var/lib/$(APP)/meta#' | \
+	    sed 's#@@CACHE_DIR@@#/var/lib/$(APP)/cache#' | \
+	    sed 's#@@LOG_PATH@@#/var/log/$(APP)/messages.log#' | \
 	    sed 's#@@SASL_LOG@@#/var/log/$(APP)/sasl.log#' > /etc/$(APP).config
 	chmod 644 /etc/$(APP).config
-	install -m 755 debian-init.d.sh /etc/init.d/$(APP)
+	install -m 755 pkg.d/debian/initd.sh /etc/init.d/$(APP)
 	install -m 755 --directory -o $(APP) -g $(APP) /var/log/$(APP)
 
 debian-uninstall:
