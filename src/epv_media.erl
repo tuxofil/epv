@@ -158,84 +158,73 @@ file2resized(Filename) ->
 -spec get_tags(Filename :: file:filename()) ->
                       {ok, MetaInfo :: binary()} | {error, Reason :: any()}.
 get_tags(Filename) ->
-    OriginPath = file2abs(Filename),
-    IsVideo = is_video(OriginPath),
-    TagsPath = file2tags(Filename),
-    case filelib:is_regular(TagsPath) of
-        true ->
-            file:read_file(TagsPath);
-        false when IsVideo ->
-            ok = filelib:ensure_dir(TagsPath),
-            _IgnoredStdout =
-                os:cmd(
-                  io_lib:format(
-                    "ffmpeg -y -v quiet -i \"~s\" -f ffmetadata \"~s\"",
-                    [OriginPath, TagsPath])),
-            file:read_file(TagsPath);
-        false ->
-            ok = filelib:ensure_dir(TagsPath),
-            _IgnoredStdout =
-                os:cmd(
-                  io_lib:format(
-                    "identify -verbose \"~s\" > \"~s\"",
-                    [OriginPath, TagsPath])),
-            file:read_file(TagsPath)
+    TagsFilePath = file2tags(Filename),
+    case fetch_and_cache_tags(file2abs(Filename), TagsFilePath) of
+        ok ->
+            file:read_file(TagsFilePath);
+        {error, _Reason} = Error ->
+            Error
     end.
+
+%% @doc
+-spec fetch_and_cache_tags(OriginFileName :: file:filename(),
+                           CachedFileName :: file:filename()) ->
+                                  ok | {error, Reason :: any()}.
+fetch_and_cache_tags(OriginFilePath, CachedFilePath) ->
+    make(
+      fun(Origin, Cached) ->
+              case is_video(Origin) of
+                  true ->
+                      exec_simple(
+                        "ffmpeg",
+                        ["-y", "-v", "quiet", "-i", Origin,
+                         "-f", "ffmetadata", Cached]);
+                  false ->
+                      exec_simple(
+                        "identify", ["-verbose", Origin, ">", Cached])
+              end
+      end, OriginFilePath, CachedFilePath).
 
 %% @doc Create thumbnail if it is not exists yet.
 -spec create_thumb_if_needed(Filename :: file:filename()) ->
                                     ok | {error, Reason :: any()}.
 create_thumb_if_needed(Filename) ->
-    OriginPath = get_origin_filename(file2abs(Filename)),
-    IsVideo = is_video(OriginPath),
-    ThumbPath = file2thumb(Filename),
-    case filelib:is_regular(ThumbPath) of
-        true -> ok;
-        false when IsVideo ->
-            ok = filelib:ensure_dir(ThumbPath),
-            _IgnoredStdout =
-                os:cmd(
-                  io_lib:format(
-                    "ffmpeg -y -v quiet -i \"~s\" -vcodec mjpeg"
-                    " -vframes 1 -an -f rawvideo -s ~wx~w - |"
-                    " composite -gravity SouthWest \"~s\" - \"~s\"",
-                    [OriginPath,
-                     ?THUMB_WIDTH, ?THUMB_HEIGHT,
-                     epv_priv:readlink("video-x-generic.png"),
-                     ThumbPath])),
-            ok;
-        false ->
-            ok = filelib:ensure_dir(ThumbPath),
-            _IgnoredStdout =
-                os:cmd(
-                  io_lib:format(
-                    "convert \"~s\" "
-                    "-thumbnail ~wx~w -strip -auto-orient \"~s\"",
-                    [OriginPath,
-                     ?THUMB_WIDTH, ?THUMB_HEIGHT,
-                     ThumbPath])),
-            ok
-    end.
+    OriginFilePath = get_origin_filename(file2abs(Filename)),
+    ThumbFilePath = file2thumb(Filename),
+    make(
+      fun(Origin, Cached) ->
+              Dimension = integer_to_list(?THUMB_WIDTH) ++ "x" ++
+                  integer_to_list(?THUMB_HEIGHT),
+              case is_video(Origin) of
+                  true ->
+                      exec_simple(
+                        "ffmpeg",
+                        ["-y", "-v", quiet, "-i", Origin,
+                         "-vcodec", mjpeg, "-vframes", 1, "-an",
+                         "-f", rawvideo, "-s", Dimension, "-", "|",
+                         "composite", "-gravity", "SouthWest",
+                         epv_priv:readlink("video-x-generic.png"),
+                         "-", Cached]);
+                  false ->
+                      exec_simple(
+                        "convert",
+                        [Origin, "-thumbnail", Dimension, "-strip",
+                         "-auto-orient", Cached])
+              end
+      end, OriginFilePath, ThumbFilePath).
 
 %% @doc Create resized image if it is not exists yet.
 -spec create_resized_if_needed(Filename :: file:filename()) ->
                                       ok | {error, Reason :: any()}.
 create_resized_if_needed(Filename) ->
-    ResizedFilename = file2resized(Filename),
-    case filelib:is_regular(ResizedFilename) of
-        true -> ok;
-        false ->
-            ok = filelib:ensure_dir(ResizedFilename),
-            _IgnoredStdout =
-                os:cmd(
-                  io_lib:format(
-                    "convert \"~s\" "
-                    "-resize '~wx~w>' -auto-orient \"~s\"",
-                    [file2abs(Filename),
-                     ?RESIZED_WIDTH, ?RESIZED_HEIGHT,
-                     ResizedFilename])),
-            ok
-    end.
+    make(
+      fun(Origin, Cached) ->
+              Dimension = integer_to_list(?RESIZED_WIDTH) ++ "x" ++
+                  integer_to_list(?RESIZED_HEIGHT) ++ ">",
+              exec_simple(
+                "convert",
+                [Origin, "-resize", Dimension, "-auto-orient", Cached])
+      end, file2abs(Filename), file2resized(Filename)).
 
 %% @doc Return absolute path for directory where thumbnails will
 %% be stored.
@@ -379,21 +368,155 @@ get_origin_filename(ThumbFilename) ->
             end
     end.
 
+%% @doc
 -spec proplist_set(Key :: atom(), NewValue :: any(),
                    Proplist :: [{Key :: atom(), Value :: any()}]) ->
                           NewProplist :: [{Key :: atom(), Value :: any()}].
 proplist_set(Key, Value, Proplist) ->
     [{Key, Value} | proplists:delete(Key, Proplist)].
 
+%% @doc
 -spec file2abs(Filename :: file:filename()) -> AbsPath :: file:filename().
 file2abs(Filename) ->
     filename:join(epv_lib:cfg(?CFG_MEDIA_DIR), Filename).
 
+%% @doc
 -spec file2meta(Filename :: file:filename()) -> MetaPath :: file:filename().
 file2meta(Filename) ->
     filename:join(meta_info_dir(), Filename ++ ".info").
 
+%% @doc
 -spec meta_info_dir() -> MetaDir :: file:filename().
 meta_info_dir() ->
     filename:join(epv_lib:cfg(?CFG_CACHE_DIR), "info").
+
+-type compiler() ::
+        fun((OriginFilePath :: file:filename(),
+             CompiledFilePath :: file:filename()) ->
+                   ok | {error, Reason :: any()}).
+
+%% @doc Compile source file if destination file is not exists
+%% or is older than the source file.
+-spec make(Compiler :: compiler(),
+           SourceFilePath :: file:filename(),
+           CompiledFilePath :: file:filename()) ->
+                  ok | {error, Reason :: any()}.
+make(Compiler, SourceFilePath, CompiledFilePath) ->
+    case is_outdated(SourceFilePath, CompiledFilePath) of
+        true ->
+            case filelib:ensure_dir(CompiledFilePath) of
+                ok ->
+                    Compiler(SourceFilePath, CompiledFilePath);
+                {error, _Reason} = Error ->
+                    Error
+            end;
+        false ->
+            ok
+    end.
+
+%% @doc
+-spec is_outdated(OriginFilePath :: file:filename(),
+                  GeneratedFilePath :: file:filename()) ->
+                         boolean().
+is_outdated(OriginFilePath, GeneratedFilePath) ->
+    mtime_cmp(OriginFilePath, GeneratedFilePath) /= -1.
+
+%% @doc
+-spec mtime_cmp(Path1 :: file:filename(), Path2 :: file:filename()) ->
+                       (Path1IsOlderThanPath2 :: -1) |
+                       (Contemporaries :: 0) |
+                       (Path1IsYoungerThanPath2 :: 1) |
+                       error.
+mtime_cmp(Path1, Path2) ->
+    case {filelib:last_modified(Path1), filelib:last_modified(Path2)} of
+        {DateTime1, DateTime2}
+          when is_tuple(DateTime1), is_tuple(DateTime2) ->
+            if DateTime1 < DateTime2 ->
+                    -1;
+               DateTime1 > DateTime2 ->
+                    1;
+               true ->
+                    0
+            end;
+        _Other ->
+            error
+    end.
+
+%% @doc
+-spec exec_simple(Executable :: nonempty_string(),
+                  Arguments :: [string() | atom() | integer()]) ->
+                         ok | {error, Reason :: any()}.
+exec_simple(Executable, Arguments) ->
+    case exec(Executable, Arguments) of
+        {0, _Output} ->
+            ok;
+        {ExitCode, Output} ->
+            {error, [{exit_code, ExitCode}, {output, Output}]}
+    end.
+
+%% @doc
+-spec exec(Executable :: nonempty_string(),
+           Arguments :: [string() | atom() | integer()]) ->
+                  {ExitCode :: non_neg_integer(), Output :: string()}.
+exec(Executable, Arguments) ->
+    case openport(Executable ++ " " ++ quote_and_join_args(Arguments)) of
+        {ok, Port} ->
+            collect_port_results(Port, _AccOutput = []);
+        {error, _Reason} = Error ->
+            Error
+    end.
+
+%% @doc Wrapper for erlang:open_port/2 call.
+-spec openport(Command :: nonempty_string()) ->
+                      {ok, Port :: port()} | {error, Reason :: any()}.
+openport(Command) ->
+    try
+        {ok, open_port({spawn, Command},
+                       [exit_status, use_stdio, stderr_to_stdout,
+                        in, hide, {env, [{"LC_ALL", "C"}]}])}
+    catch
+        error:Reason ->
+            {error, Reason}
+    end.
+
+%% @doc
+-spec collect_port_results(Port :: port(), AccOutput :: [string()]) ->
+                                  {ExitCode :: non_neg_integer(),
+                                   Output :: string()}.
+collect_port_results(Port, AccOutput) ->
+    receive
+        {Port, {exit_status, ExitCode}} ->
+            catch port_close(Port),
+            {ExitCode,
+             lists:flatten(lists:reverse(AccOutput))};
+        {Port, {data, Data}} ->
+            collect_port_results(Port, [Data | AccOutput])
+    end.
+
+%% @doc
+-spec quote_and_join_args(Arguments :: [string() | atom() | integer()]) ->
+                                 string().
+quote_and_join_args(Arguments) ->
+    string:join([quote_argument(A) || A <- Arguments], " ").
+
+%% @doc
+-spec quote_argument(Argument :: string() | atom() | integer()) ->
+                            Quoted :: nonempty_string().
+quote_argument(Atom) when is_atom(Atom) ->
+    quote_argument(atom_to_list(Atom));
+quote_argument(Integer) when is_integer(Integer) ->
+    quote_argument(integer_to_list(Integer));
+quote_argument(">" = Redirect) ->
+    Redirect;
+quote_argument("|" = Pipe) ->
+    Pipe;
+quote_argument(Argument) ->
+    [$' | lists:flatmap(fun quote_char/1, Argument)] ++ [$'].
+
+%% @doc
+-spec quote_char(Char :: non_neg_integer()) -> Quoted :: nonempty_string().
+quote_char($') ->
+    [$\\, $'];
+quote_char(C) ->
+    [C].
 
