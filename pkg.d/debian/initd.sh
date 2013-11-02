@@ -6,172 +6,105 @@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Erlang Photo Viewer
-# Description:       Web based photo gallery written on Erlang
+# Description:       EPV is lightweight and minimalistic Web-gallery
+#                    for your photographs and videos.
 ### END INIT INFO
 
 # Author: Aleksey Morarash <aleksey.morarash@gmail.com>
 
+PATH=/bin:/sbin:/usr/bin
+DESC="Erlang Photo Viewer"
 NAME=epv
-RUN_AS_USER="$NAME"
-CONFIG=/etc/"$NAME".config
-LOGDIR=/var/log/"$NAME"
-ERL=/usr/bin/erl
+DAEMON=/usr/bin/$NAME
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
 
-prepare(){
-    set -e
-    [ -d "$LOGDIR" ] || \
-        install --mode=755 --owner="$RUN_AS_USER" --directory "$LOGDIR"
-    HOMEDIR=`rundir`
-    [ -d "$HOMEDIR" ] || \
-        install --mode=755 --owner="$RUN_AS_USER" --directory "$HOMEDIR"
-    COOKIE_FILE="$HOMEDIR"/.erlang.cookie
-    [ -f "$COOKIE_FILE" ] || create_cookie_file "$COOKIE_FILE"
-    set +e
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+DAEMON_ARGS="$MEDIA_PATH $CACHE_PATH"
+[ -n "$LANGUAGE" ] && DAEMON_ARGS="-l $LANGUAGE $DAEMON_ARGS"
+[ -n "$BIND_ADDR" ] && DAEMON_ARGS="-i $BIND_ADDR $DAEMON_ARGS"
+[ -n "$BIND_PORT" ] && DAEMON_ARGS="-p $BIND_PORT $DAEMON_ARGS"
+[ "$SHOW_TAGS" = "yes" -o "$SHOW_TAGS" = "1" -o "$SHOW_TAGS" = "true" ] || \
+    DAEMON_ARGS="--no-tags $DAEMON_ARGS"
+[ -n "$LOG_PATH" ] && DAEMON_ARGS="--log $LOG_PATH $DAEMON_ARGS"
+[ -n "$LOGLEVEL" ] && DAEMON_ARGS="-v $LOGLEVEL $DAEMON_ARGS"
+
+[ -r /lib/init/vars.sh ] && . /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+do_start() {
+    # Return
+    #   0 if daemon has been started
+    #   1 if daemon was already running
+    #   2 if daemon could not be started
+    start-stop-daemon --quiet --status \
+        --pidfile $PIDFILE --user $NAME && return 1
+    start-stop-daemon --quiet --start --background --make-pidfile \
+        --pidfile $PIDFILE --user $NAME --chuid $NAME \
+        --exec $DAEMON -- $DAEMON_ARGS || return 2
 }
 
-create_cookie_file(){
-    local COOKIE_FILE="$1"
-    touch "$COOKIE_FILE" && \
-    chown "$RUN_AS_USER": "$COOKIE_FILE" && \
-    chmod 0600 "$COOKIE_FILE" && \
-    cat /dev/urandom | tr --delete --complement a-zA-Z0-9 | \
-        head --bytes=20 > "$COOKIE_FILE"
+do_stop() {
+    # Return
+    #   0 if daemon has been stopped
+    #   1 if daemon was already stopped
+    #   2 if daemon could not be stopped
+    #   other if a failure occurred
+    start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 \
+        --pidfile $PIDFILE --user $NAME
+    RETVAL="$?"
+    [ "$RETVAL" = 2 ] && return 2
+    rm -f $PIDFILE
+    return "$RETVAL"
 }
-
-rundir(){
-    getent passwd "$RUN_AS_USER" | cut --delimiter=":" --fields=6
-}
-
-start(){
-    if status; then
-        echo "$NAME already started"
-        return 0
-    fi
-    set -e
-    echo -n "Starting $NAME..."
-    su_exec "$ERL \
-        -name `nodename` \
-        -boot start_sasl \
-        -detached \
-        -config $CONFIG \
-        -s epv start_permanent"
-    echo "done"
-    set +e
-}
-
-stop(){
-    if ! status; then
-        echo "$NAME already stopped"
-        return 0
-    fi
-    echo -n "Stopping $NAME..."
-    su_exec "$ERL \
-        -name `randname` \
-        -noinput \
-        -hidden \
-        -s epv stop `nodename`"
-    RET=$?
-    if [ "$RET" = "0" ]; then
-        echo "stopped"
-    else
-        echo "failed"
-    fi
-    return "$RET"
-}
-
-status(){
-    su_exec "$ERL \
-        -name `randname` \
-        -noinput \
-        -hidden \
-        -s epv ping `nodename`"
-}
-
-wait_to_stop(){
-    while status; do :; done
-}
-
-attach(){
-    if ! status; then
-        echo "$NAME is stopped. No node to attach."
-        return 1
-    fi
-    su_exec "$ERL \
-        -name `randname` \
-        -hidden \
-        -remsh `nodename`"
-}
-
-hup(){
-    if ! status; then
-        echo "$NAME is stopped. Nothing to do."
-        return 1
-    fi
-    su_exec "$ERL \
-        -name `randname` \
-        -noinput \
-        -hidden \
-        -s epv hup `nodename`"
-}
-
-su_exec(){
-    COMMAND="$1"
-    if [ "$RUN_AS_USER" = "root" ]; then
-        sh -c "$COMMAND"
-    else
-        sudo -n -u "$RUN_AS_USER" -i $COMMAND
-    fi
-}
-
-nodename(){
-    echo "${NAME}@127.0.0.1"
-}
-
-randname(){
-    RANDOM=`date +%N`
-    echo "${NAME}_${RANDOM}_remsh@127.0.0.1"
-}
-
-prepare
 
 case "$1" in
     start)
-        start
+        [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+        do_start
+        case "$?" in
+            0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+            2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+        esac
         ;;
-
     stop)
-        stop
+        [ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+        do_stop
+        case "$?" in
+            0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+            2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+        esac
         ;;
-
-    restart)
-        if status; then
-            stop
-            wait_to_stop
-        fi
-        start
-        ;;
-
     status)
-        if status; then
-            echo "$NAME is running"
-            exit 0
-        else
-            echo "$NAME is not running"
-            exit 1
-        fi
+        status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
         ;;
-
-    attach)
-        attach
+    restart|force-reload)
+        log_daemon_msg "Restarting $DESC" "$NAME"
+        do_stop
+        case "$?" in
+            0|1)
+                do_start
+                case "$?" in
+                    0) log_end_msg 0 ;;
+                    1) log_end_msg 1 ;; # Old process is still running
+                    *) log_end_msg 1 ;; # Failed to start
+                esac
+                ;;
+            *)
+                # Failed to stop
+                log_end_msg 1
+                ;;
+        esac
         ;;
-
-    hup)
-        hup
-        ;;
-
     *)
-        echo "Usage: $0 {start|stop|restart|status|attach|hup}"
-        exit 1
+        echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+        exit 3
         ;;
 esac
 
+:

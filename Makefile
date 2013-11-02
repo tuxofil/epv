@@ -94,26 +94,18 @@ install-html: html
 	install -m 755 --directory $(DESTDIR)
 	install -m 644 doc/*.html doc/*.css doc/*.png $(DESTDIR)/
 
-debian-install:
-	getent passwd $(APP) || \
-	    adduser --system --shell /bin/sh --home /var/lib/$(APP) $(APP)
-	$(MAKE) DESTDIR=/usr/lib/erlang/lib install
-	$(MAKE) DESTDIR=/usr/share/doc/erlang-$(APP) install-doc
-	$(MAKE) DESTDIR=/usr/share/doc/erlang-$(APP)/html install-html
-	cat pkg.d/app.config-template | \
-	    sed 's#@@BIND_IP@@#any#' | \
-	    sed 's#@@TCP_PORT@@#8080#' | \
-	    sed 's#@@MEDIA_DIR@@#/var/lib/$(APP)/media#' | \
-	    sed 's#@@CACHE_DIR@@#/var/lib/$(APP)/cache#' | \
-	    sed 's#@@LOG_PATH@@#/var/log/$(APP)/messages.log#' | \
-	    sed 's#@@SASL_LOG@@#/var/log/$(APP)/sasl.log#' > /etc/$(APP).config
-	chmod 644 /etc/$(APP).config
+debian-install: epv
+	getent passwd $(APP) || adduser --system --group $(APP)
+	install -m 755 $(APP) /usr/bin/$(APP)
+	install -m 644 pkg.d/debian/epv.conf /etc/default/$(APP)
 	install -m 755 pkg.d/debian/initd.sh /etc/init.d/$(APP)
 	install -m 755 --directory -o $(APP) -g $(APP) /var/log/$(APP)
+	install -m 755 --directory -o $(APP) -g $(APP) /var/lib/$(APP)
 
 debian-uninstall:
-	rm -f /etc/$(APP).config
+	rm -f /usr/bin/$(APP)
+	rm -f /etc/default/$(APP)
 	rm -f /etc/init.d/$(APP)
-	rm -rf /usr/lib/erlang/lib/$(APP)-*
-	rm -rf /usr/share/doc/erlang-$(APP)
+	rm -rf /var/lib/$(APP)
+	rm -rf /var/log/$(APP)
 
