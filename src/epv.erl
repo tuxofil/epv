@@ -127,20 +127,6 @@ permit(Filename) ->
 main(Args) ->
     ok = load_app(),
     ok = parse_args(Args),
-    DaemonID =
-        case application:get_env(?MODULE, ?CFG_DAEMON_ID) of
-            {ok, DaemonID0} ->
-                DaemonID0;
-            undefined ->
-                ?MODULE
-        end,
-    _IgnoredStdout = os:cmd("epmd -address 127.0.0.1 -daemon"),
-    case net_kernel:start([DaemonID, shortnames]) of
-        {ok, _Pid} ->
-            ok;
-        {error, Reason} ->
-            err("Failed to start Erlang Distribution:~n~p", [Reason])
-    end,
     ok = start_app(),
     ok = timer:sleep(infinity).
 
@@ -206,9 +192,8 @@ usage() ->
       "~n"
       "Additional options:~n"
       "\t--sasl      - start SASL;~n"
-      "\t--id DaemonID - Default is 'epv'. Set it to something else if~n"
-      "\t              you want to run several instances of the program~n"
-      "\t              at the same time.~n"
+      "\t--name Name - If set, the Erlang Distribution will be started.~n"
+      "\t              The Erlang node will be named as Name@`hostname -s`.~n"
       "~n",
       [version(), escript:script_name()]),
     halt().
@@ -272,11 +257,22 @@ parse_args(["-v", LoglevelStr | Tail]) ->
     end,
     set_env(?CFG_LOGLEVEL, Loglevel),
     parse_args(Tail);
-parse_args(["--id", DaemonID | Tail]) ->
-    set_env(?CFG_DAEMON_ID, list_to_atom(DaemonID)),
+parse_args(["--name", Name | Tail]) ->
+    ok = start_erlang_distribution(list_to_atom(Name)),
     parse_args(Tail);
 parse_args(Other) ->
     err("Unrecognized option or arguments: ~p", [Other]).
+
+%% @doc Start Erlang Distribution
+-spec start_erlang_distribution(Shortname :: atom()) -> ok.
+start_erlang_distribution(Shortname) ->
+    _IgnoredStdout = os:cmd("epmd -address 127.0.0.1 -daemon"),
+    case net_kernel:start([Shortname, shortnames]) of
+        {ok, _Pid} ->
+            ok;
+        {error, Reason} ->
+            err("Failed to start Erlang Distribution:~n~p", [Reason])
+    end.
 
 %% @doc Set environment for application.
 -spec set_env(Key :: atom(), Value :: any()) -> ok.

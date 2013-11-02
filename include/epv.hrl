@@ -14,8 +14,6 @@
 -define(CFG_LOG_PATH, log_path).
 -define(CFG_LOGLEVEL, loglevel).
 
--define(CFG_DAEMON_ID, daemon_id).
-
 %% ----------------------------------------------------------------------
 %% log levels
 
