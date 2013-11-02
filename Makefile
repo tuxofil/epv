@@ -95,7 +95,8 @@ install-html: html
 	install -m 644 doc/*.html doc/*.css doc/*.png $(DESTDIR)/
 
 debian-install: epv
-	getent passwd $(APP) || adduser --system --group $(APP)
+	getent passwd $(APP) || \
+	    adduser --system --group --no-create-home $(APP)
 	install -m 755 $(APP) /usr/bin/$(APP)
 	install -m 644 pkg.d/debian/epv.conf /etc/default/$(APP)
 	install -m 755 pkg.d/debian/initd.sh /etc/init.d/$(APP)
