@@ -3,8 +3,7 @@ APP = epv
 VERSION = $(shell cat version)
 
 .PHONY: all compile doc clean test eunit dialyze all-tests \
-	install install-doc install-html \
-	debian-install debian-uninstall
+	install install-doc install-html
 
 all: compile html
 
@@ -93,20 +92,3 @@ install-doc:
 install-html: html
 	install -m 755 --directory $(DESTDIR)
 	install -m 644 doc/*.html doc/*.css doc/*.png $(DESTDIR)/
-
-debian-install: epv
-	getent passwd $(APP) || \
-	    adduser --system --group --no-create-home $(APP)
-	install -m 755 $(APP) /usr/bin/$(APP)
-	install -m 644 pkg.d/debian/epv.conf /etc/default/$(APP)
-	install -m 755 pkg.d/debian/initd.sh /etc/init.d/$(APP)
-	install -m 755 --directory -o $(APP) -g $(APP) /var/log/$(APP)
-	install -m 755 --directory -o $(APP) -g $(APP) /var/lib/$(APP)
-
-debian-uninstall:
-	rm -f /usr/bin/$(APP)
-	rm -f /etc/default/$(APP)
-	rm -f /etc/init.d/$(APP)
-	rm -rf /var/lib/$(APP)
-	rm -rf /var/log/$(APP)
-
