@@ -18,7 +18,7 @@ BIND_ADDR="0.0.0.0"
 BIND_PORT=8080
 
 # Show media files metainfo at the bottom of the page or not
-SHOW_TAGS="yes"
+SHOW_TAGS="no"
 
 # Path to log file
 LOG_PATH="/var/log/epv/messages.log"
@@ -26,4 +26,3 @@ LOG_PATH="/var/log/epv/messages.log"
 # Threshold for log messages.
 # Valid values: debug, info, warning, error, critical, none.
 LOGLEVEL="info"
-

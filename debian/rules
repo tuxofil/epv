@@ -1,0 +1,36 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+%:
+	dh $@
+
+# Build the epv binary and docs.
+# Also all tests available will run here BEFORE the build because
+# during tests 'clean' target is called (debhelper runs
+# the dh_auto_test target after the dh_auto_build target).
+override_dh_auto_build:
+	$(MAKE) all-tests
+	$(MAKE) epv
+	$(MAKE) html
+
+# Do not run any tests after the build
+# (see override_dh_auto_build comment for details)
+override_dh_auto_test:
+
+# Disable use of 'install' target of the main Makefile of the project
+override_dh_auto_install:
+
+# Implement staged installation
+EPV_DESTDIR = debian/epv
+EPV_DOC_DESTDIR = debian/epv-doc
+override_dh_install:
+	install -m 755 -d $(EPV_DESTDIR)/usr/bin
+	install -m 755 epv $(EPV_DESTDIR)/usr/bin/epv
+	install -m 755 debian/wrapper.sh $(EPV_DESTDIR)/usr/bin/epv-wrapper
+	install -m 755 -d $(EPV_DESTDIR)/var/log/epv
+	install -m 755 -d $(EPV_DESTDIR)/var/lib/epv
+	install -m 755 -d $(EPV_DESTDIR)/var/epv
+	$(MAKE) install-html DESTDIR=$(EPV_DOC_DESTDIR)/usr/share/doc/epv-doc

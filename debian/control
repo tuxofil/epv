@@ -1,0 +1,25 @@
+Source: epv
+Section: graphics
+Priority: extra
+Maintainer: Aleksey Morarash <aleksey.morarash@gmail.com>
+Build-Depends: debhelper (>= 8.0.0), erlang-base, erlang-dev, erlang-tools,
+ erlang-edoc, erlang-eunit, erlang-dialyzer, zip
+Standards-Version: 3.9.3
+Homepage: https://github.com/tuxofil/epv
+Vcs-Browser: https://github.com/tuxofil/epv
+Vcs-Git: https://github.com/tuxofil/epv.git
+
+Package: epv
+Architecture: all
+Depends: erlang-base, erlang-inets, mime-support, imagemagick, logrotate
+Recommends: ffmpeg
+Description: Web based photo gallery
+ epv is a minimalistic photo gallery with Web interface.
+ It does not need write access to directories with your media files
+ (all epv-related files, e.g., user defined meta info, thumbnails
+ and resized pictures, are kept in a separate location).
+
+Package: epv-doc
+Architecture: all
+Description: epv developer documentation.
+ Contains generated HTML documentation for the epv source code.

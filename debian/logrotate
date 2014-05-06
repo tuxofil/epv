@@ -1,0 +1,9 @@
+/var/log/epv/messages.log {
+    daily
+    maxsize 50m
+    compress
+    delaycompress
+    missingok
+    notifempty
+    maxage 5
+}
