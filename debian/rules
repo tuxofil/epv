@@ -13,6 +13,7 @@ export DH_OPTIONS
 # the dh_auto_test target after the dh_auto_build target).
 override_dh_auto_build:
 	$(MAKE) all-tests
+	$(MAKE) clean
 	$(MAKE) epv
 	$(MAKE) html
 
