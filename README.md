@@ -60,23 +60,6 @@ To run all mentioned tests type:
 
     $ make all-tests
 
-## Installing
-
-Sorry, there are no RPM or DEB packages yet, but you can
-install _epv_ as a separate service in Debian with:
-
-    $ sudo make debian-install
-
-which will put an epv start/stop script in /etc/init.d.
-After starting _epv_ with something like "service epv start", _epv_
-will start serving http requests on port 8080 (default, configurable).
-
-There is a few targets for staged installation (using DESTDIR):
-
-* install - installs Erlang application itself;
-* install-doc - installs this memo and license;
-* install-html - installs generated HTML documentation.
-
 ## Configuration
 
 When running as normal Erlang application all configurations is taken
