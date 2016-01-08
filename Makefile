@@ -1,6 +1,6 @@
 APP = epv
 
-VERSION = $(shell cat version)
+VERSION = $(shell awk '{gsub("[()]","",$$2);print$$2;exit}' debian/changelog)
 
 .PHONY: all compile doc clean test eunit dialyze all-tests
 
