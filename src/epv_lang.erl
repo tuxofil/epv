@@ -33,7 +33,7 @@
          TextItems :: [lang_config_text_item()]}.
 
 -type lang_config_text_item() ::
-        {TextItemID :: atom(), LangID2StringMap :: dict()}.
+        {TextItemID :: atom(), LangID2StringMap :: dict:dict()}.
 
 %% ----------------------------------------------------------------------
 %% Internal signals and keywords
