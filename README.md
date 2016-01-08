@@ -48,10 +48,6 @@ For further details see output of
 
 ## Testing
 
-To run functional tests type:
-
-    $ make test
-
 To run unit tests type:
 
     $ make eunit

@@ -2,7 +2,7 @@ APP = epv
 
 VERSION = $(shell awk '{gsub("[()]","",$$2);print$$2;exit}' debian/changelog)
 
-.PHONY: all compile doc clean test eunit dialyze all-tests
+.PHONY: all compile doc clean eunit dialyze all-tests
 
 all: compile html
 
@@ -39,9 +39,6 @@ html:
 	erl -noinput -eval \
 		'edoc:application($(APP),".",[{application,$(APP)}]),halt()'
 
-test:
-	$(MAKE) -C test
-
 eunit:
 	$(MAKE) TEST=y clean compile
 	erl -noinput -pa ebin \
@@ -61,7 +58,6 @@ $(PLT):
 
 all-tests:
 	$(MAKE) eunit
-	$(MAKE) test
 	$(MAKE) dialyze
 
 clean:
@@ -69,4 +65,3 @@ clean:
 	    $(APP).zip $(APP) *.log \
 	    erl_crash.dump Emakefile doc/overview.edoc
 	find . -type f -name '*~' -delete
-	$(MAKE) -C test clean
