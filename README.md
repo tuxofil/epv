@@ -85,7 +85,7 @@ There is a few targets for staged installation (using DESTDIR):
 
 When running as normal Erlang application all configurations is taken
 from Erlang application environment. Example of such configuration is
-presented in etc/app.config file.
+presented in app.config file.
 
 When running as all-in-one-file escript (see 'epv' makefile target)
 all configurations is set with epv command line options and arguments.
