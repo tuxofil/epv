@@ -1,0 +1,2 @@
+epv /usr/bin
+debian/wrapper.sh /usr/share/epv

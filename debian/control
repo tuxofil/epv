@@ -2,8 +2,8 @@ Source: epv
 Section: graphics
 Priority: extra
 Maintainer: Aleksey Morarash <aleksey.morarash@gmail.com>
-Build-Depends: debhelper (>= 8.0.0), erlang-base, erlang-dev, erlang-tools,
- erlang-edoc, erlang-eunit, erlang-dialyzer, zip
+Build-Depends: debhelper, dh-systemd, erlang-base, erlang-dev, erlang-tools,
+ erlang-edoc, erlang-eunit, zip
 Standards-Version: 3.9.3
 Homepage: https://github.com/tuxofil/epv
 Vcs-Browser: https://github.com/tuxofil/epv

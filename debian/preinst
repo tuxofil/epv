@@ -1,12 +1,9 @@
-#!/bin/sh
-
-set -e
-
-NAME=epv
+#!/bin/sh -e
 
 case "$1" in
     install|upgrade)
-        adduser --system --group --no-create-home $NAME || :
+        getent passwd epv > /dev/null || \
+            adduser --system --group --no-create-home --home /var/lib/epv epv
         ;;
     abort-upgrade)
         ;;

@@ -2,8 +2,7 @@ APP = epv
 
 VERSION = $(shell cat version)
 
-.PHONY: all compile doc clean test eunit dialyze all-tests \
-	install install-doc install-html
+.PHONY: all compile doc clean test eunit dialyze all-tests
 
 all: compile html
 
@@ -71,20 +70,3 @@ clean:
 	    erl_crash.dump Emakefile doc/overview.edoc
 	find . -type f -name '*~' -delete
 	$(MAKE) -C test clean
-
-install: compile
-	install -m 755 --directory $(DESTDIR)/$(APP)-$(VERSION)/ebin
-	install -m 644 ebin/*.beam ebin/*.app $(DESTDIR)/$(APP)-$(VERSION)/ebin
-	install -m 755 --directory $(DESTDIR)/$(APP)-$(VERSION)/priv
-	install -m 644 priv/epv.lang $(DESTDIR)/$(APP)-$(VERSION)/priv
-	install -m 755 --directory $(DESTDIR)/$(APP)-$(VERSION)/priv/www
-	install -m 644 priv/www/*.png priv/www/*.css \
-	    $(DESTDIR)/$(APP)-$(VERSION)/priv/www
-
-install-doc:
-	install -m 755 --directory $(DESTDIR)
-	install -m 644 README.md LICENSE $(DESTDIR)/
-
-install-html: html
-	install -m 755 --directory $(DESTDIR)
-	install -m 644 doc/*.html doc/*.css doc/*.png $(DESTDIR)/

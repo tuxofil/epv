@@ -1,0 +1,6 @@
+#
+# Config file for the epv runtime files and directories
+#
+
+d /var/lib/epv 0755 epv epv -
+d /var/log/epv 0755 epv epv -

@@ -1,0 +1,17 @@
+[Unit]
+Description=Erlang Photo Viewer
+After=network.target
+Requires=epmd.socket
+
+[Service]
+Type=simple
+User=epv
+Group=epv
+UMask=0077
+ExecStart=/usr/share/epv/wrapper.sh
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
+Alias=epv
