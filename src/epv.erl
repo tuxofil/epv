@@ -193,7 +193,7 @@ usage() ->
       "Additional options:~n"
       "\t--sasl      - start SASL;~n"
       "\t--name Name - If set, the Erlang Distribution will be started.~n"
-      "\t              The Erlang node will be named as Name@`hostname -s`.~n"
+      "\t              The Erlang node will be named as Name@127.1.~n"
       "~n",
       [version(), escript:script_name()]),
     halt().
@@ -267,7 +267,12 @@ parse_args(Other) ->
 -spec start_erlang_distribution(Shortname :: atom()) -> ok.
 start_erlang_distribution(Shortname) ->
     _IgnoredStdout = os:cmd("epmd -address 127.0.0.1 -daemon"),
-    case net_kernel:start([Shortname, shortnames]) of
+    Longname =
+        list_to_atom(
+          lists:flatten(
+            io_lib:format("~w@127.1", [Shortname]))),
+    ok = application:set_env(kernel, inet_dist_use_interface, {127,0,0,1}),
+    case net_kernel:start([Longname]) of
         {ok, _Pid} ->
             ok;
         {error, Reason} ->
