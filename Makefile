@@ -20,10 +20,6 @@ ifdef TEST
 COPTS := $(COPTS), {d, 'TEST'}
 endif
 
-ifdef TRACE
-COPTS := $(COPTS), {d, 'TRACE'}
-endif
-
 compile:
 	mkdir -p ebin
 	sed "s/{{VERSION}}/$(VERSION)/" src/$(APP).app.in > ebin/$(APP).app
