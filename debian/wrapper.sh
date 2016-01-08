@@ -26,4 +26,4 @@ ARGS="$MEDIA_PATH $CACHE_PATH"
 [ -n "$LOG_PATH" ] && ARGS="--log $LOG_PATH $ARGS"
 [ -n "$LOGLEVEL" ] && ARGS="-v $LOGLEVEL $ARGS"
 
-exec /usr/bin/epv $ARGS
+exec /usr/bin/epv --name epv $ARGS
