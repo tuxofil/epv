@@ -48,13 +48,17 @@ strip_([Char | Tail] = Subject, Chars) ->
 
 %% @doc Make decode of possibly url encoded string.
 -spec url_decode(UrlEncoded :: string()) -> PlainString :: string().
-url_decode([]) -> [];
-url_decode([$%, A, B | Tail]) ->
-    [erlang:list_to_integer([A, B], 16) | url_decode(Tail)];
-url_decode([C | Tail]) ->
-    [C | url_decode(Tail)].
+url_decode(UrlEncoded) ->
+    unicode:characters_to_list(list_to_binary(url_decode_(UrlEncoded))).
 
 %% ----------------------------------------------------------------------
 %% Internal functions
 %% ----------------------------------------------------------------------
 
+%% @doc Helper for the url_decode/1 function.
+-spec url_decode_(UrlEncoded :: string()) -> PlainString :: string().
+url_decode_([]) -> [];
+url_decode_([$%, A, B | Tail]) ->
+    [erlang:list_to_integer([A, B], 16) | url_decode_(Tail)];
+url_decode_([C | Tail]) ->
+    [C | url_decode_(Tail)].

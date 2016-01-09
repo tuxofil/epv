@@ -262,7 +262,7 @@ parse_cookies(ModData) ->
                      {proceed, NewData :: list()}.
 process(ModData, Path, _Query) ->
     Content = epv_html:navig(epv_lib:strip(Path, "/")),
-    Binary = list_to_binary(Content),
+    Binary = unicode:characters_to_binary(Content),
     Headers =
         [{content_type, ?mime_text_html},
          {content_length, integer_to_list(size(Binary))}],
