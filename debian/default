@@ -26,3 +26,6 @@ LOG_PATH="/var/log/epv/messages.log"
 # Threshold for log messages.
 # Valid values: debug, info, warning, error, critical, none.
 LOGLEVEL="info"
+
+# Start SASL application
+SASL="no"

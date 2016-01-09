@@ -25,5 +25,7 @@ ARGS="$MEDIA_PATH $CACHE_PATH"
     ARGS="--no-tags $ARGS"
 [ -n "$LOG_PATH" ] && ARGS="--log $LOG_PATH $ARGS"
 [ -n "$LOGLEVEL" ] && ARGS="-v $LOGLEVEL $ARGS"
+[ "$SASL" = "yes" -o "$SASL" = "1" -o "$SASL" = "true" ] && \
+    ARGS="--sasl $ARGS"
 
 exec /usr/bin/epv --name epv $ARGS
