@@ -1,3 +1,20 @@
+epv (0.6.0) unstable; urgency=low
+
+  * extend default config with option for sasl starting
+  * add Erlang remsh script
+  * do not rely on hostnames, use loopback for Erlang distribution
+  * readme: remove obsolete install section
+  * makefile: dialyze recipes minor fix
+  * remove empty test directory
+  * dispose of extra file for versioning
+  * adapt for systemd
+  * move example application config
+  * fix deprecated data type refs
+  * fix unicode chars convertion
+  * remove unused tracing stuff
+
+ -- Aleksey Morarash <aleksey.morarash@gmail.com>  Sun, 10 Jan 2016 10:57:53 +0200
+
 epv (0.5.0-4) unstable; urgency=low
 
   * Initial release.
