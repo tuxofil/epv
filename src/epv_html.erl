@@ -64,18 +64,17 @@ view(Directory, Filename, Files) ->
                     "&nbsp;"
             end),
          td(["valign=top"],
-            center(
-              case epv_media:is_video(Filename) of
-                  true ->
-                      video_block(Directory, Filename);
-                  false ->
-                      a("/origin" ++ myjoin(Directory, Filename),
-                        "<img src='/resized" ++
-                            myjoin(Directory, Filename) ++ "' "
-                        "border=1 text='" ++
-                            filename:rootname(Filename) ++ "'>")
-              end) ++
-                tags_block(filename:join(Directory, Filename))),
+            [case epv_media:is_video(Filename) of
+                 true ->
+                     video_block(Directory, Filename);
+                 false ->
+                     a("/origin" ++ myjoin(Directory, Filename),
+                       "<img src='/resized" ++
+                           myjoin(Directory, Filename) ++ "' "
+                       "border=1 text='" ++
+                           filename:rootname(Filename) ++ "'>")
+             end,
+             tags_block(filename:join(Directory, Filename))]),
          td(["valign=top", "width=32"],
             case next_item(Filename, Files) of
                 {ok, Next} ->
@@ -215,16 +214,21 @@ myjoin(Path, File) ->
 -spec video_block(Directory :: file:filename(),
                   Filename :: file:filename()) -> HTML :: iolist().
 video_block(Directory, Filename) ->
-    [epv_lang:gettext(txt_download_video) ++ ": " ++
-         a("/origin" ++ myjoin(Directory, Filename),
-           ["target=video"], Filename),
-     "<br>",
-     tag(iframe,
-         ["name=video",
-          "frameborder=0",
-          "height=" ++ integer_to_list(?RESIZED_HEIGHT),
-          "width=" ++ integer_to_list(?RESIZED_WIDTH)
-         ], "")].
+    MediaRealPath = "/origin" ++ myjoin(Directory, Filename),
+    [%% video player
+     tag(
+       video,
+       ["controls",
+        "height=" ++ integer_to_list(?RESIZED_HEIGHT),
+        "width=" ++ integer_to_list(?RESIZED_WIDTH)],
+       ["<source src=\"", MediaRealPath, "\" preload=\"metadata\">",
+        tag(
+          'div',
+          ["class=warning"],
+          epv_lang:gettext(txt_no_video_support))]),
+     %% direct link to the file
+     ["<br>", epv_lang:gettext(txt_download_video), ": ",
+      a(MediaRealPath, ["target=video"], Filename)]].
 
 -spec tags_block(Filename :: file:filename()) -> HTML :: iolist().
 tags_block(Filename) ->
@@ -245,15 +249,16 @@ tags_block(Filename) ->
 
 -spec html_page_header(Title :: string()) -> HTML :: iolist().
 html_page_header(Title) ->
-    "<html>\n\n"
-        "<head>\n"
-        "<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n"
-        "<meta http-equiv='Content-Style-Type' content='text/css'>\n"
-        "<meta http-equiv='Content-Script-Type' content='text/javascript'>\n"
-        "<title>" ++ Title ++ "</title>\n"
-        "<link rel='stylesheet' href='/res/styles.css'>\n"
-        "</head>\n\n"
-        "<body>\n\n".
+    ["<!DOCTYPE html>\n"
+     "<html>\n\n"
+     "<head>\n"
+     "<meta charset='utf-8'>\n"
+     "<meta http-equiv='Content-Style-Type' content='text/css'>\n"
+     "<meta http-equiv='Content-Script-Type' content='text/javascript'>\n"
+     "<title>", Title, "</title>\n"
+     "<link rel='stylesheet' href='/res/styles.css'>\n"
+     "</head>\n\n"
+     "<body>\n\n"].
 
 -spec html_page_footer() -> HTML :: iolist().
 html_page_footer() ->
@@ -284,14 +289,6 @@ a(URL, Caption) ->
         Caption :: iolist()) -> HTML :: iolist().
 a(URL, Attrs, Caption) ->
     tag(a, ["href='" ++ URL ++ "'" | Attrs], Caption).
-
--spec center(String :: iolist()) -> HTML :: iolist().
-center(String) ->
-    tag(center, String).
-
--spec tag(Tag :: (atom() | string()),
-          Value :: iolist()) -> HTML :: iolist().
-tag(Tag, Value) -> tag(Tag, [], Value).
 
 -spec tag(Tag :: (atom() | string()),
           Attrs :: [string()],

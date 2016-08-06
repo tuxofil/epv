@@ -12,8 +12,8 @@
 %% Common navigation
 
 {text, txt_download_video,
- [{en, "Direct link (click to play/download)"},
-  {ru, "Прямая ссылка (кликнуть для воспроизведения/загрузки)"}]}.
+ [{en, "Direct link to download"},
+  {ru, "Прямая ссылка для загрузки"}]}.
 
 %% ----------------------------------------------------------------------
 %% Error reports
@@ -22,3 +22,6 @@
  [{en, "ERROR"},
   {ru, "ОШИБКА"}]}.
 
+{text, txt_no_video_support,
+ [{en, "Your browser does not support the video tag"},
+  {ru, "Ваш браузер не поддерживает video тег"}]}.

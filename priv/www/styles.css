@@ -16,6 +16,10 @@ body {
     background-color: silver;
 }
 
+video {
+    background-color: black;
+}
+
 a {
     color: black;
 }
