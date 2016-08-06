@@ -296,9 +296,7 @@ a(URL, Attrs, Caption) ->
 tag(Tag, Attrs, Value) when is_atom(Tag) ->
     tag(atom_to_list(Tag), Attrs, Value);
 tag(Tag, Attrs, Value) when is_list(Tag) ->
-    "<" ++ Tag ++
-        [" " ++ V || V <- Attrs] ++
-        ">" ++ Value ++ "</" ++ Tag ++ ">".
+    [$<, Tag, [[$\s, V] || V <- Attrs], $>, Value, "</", Tag, $>].
 
 %% ----------------------------------------------------------------------
 %% eunit tests
