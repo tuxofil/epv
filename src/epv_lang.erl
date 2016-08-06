@@ -141,8 +141,14 @@ code_change(_OldVsn, State, _Extra) ->
 do_read() ->
     {ok, Binary} = epv_priv:read_file("epv.lang"),
     List = string_to_terms(binary_to_list(Binary)),
-    {proplists:get_value(languages, List),
-     [{ID, dict:from_list(L)} || {text, ID, L} <- List]}.
+    {%% list of languages
+     [{K, list_to_binary(V)} ||
+         {K, V} <- proplists:get_value(languages, List)],
+     %% dicts with strings
+     [{ID, dict:from_list(
+             [{K, list_to_binary(V)} || {K, V} <- L])} ||
+         {text, ID, L} <- List]
+    }.
 
 %% @doc
 -spec string_to_terms(String :: string()) -> [Term :: any()].
