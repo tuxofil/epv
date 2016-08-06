@@ -1,3 +1,12 @@
+epv (0.7.0) unstable; urgency=low
+
+  * fix mess with unicode chars
+  * minor refactor: generate iolist instead of plain list
+  * add support for ukrainian language
+  * switch to HTML 5
+
+ -- Aleksey Morarash <aleksey.morarash@gmail.com>  Sat, 06 Aug 2016 16:42:10 +0300
+
 epv (0.6.0) unstable; urgency=low
 
   * extend default config with option for sasl starting
