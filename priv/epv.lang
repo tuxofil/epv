@@ -5,6 +5,7 @@
 
 {languages,
  [{en, "English"},
+  {ua, "Українська"},
   {ru, "Русский"}
  ]}.
 
@@ -13,6 +14,7 @@
 
 {text, txt_download_video,
  [{en, "Direct link to download"},
+  {ua, "Посилання для завантаження"},
   {ru, "Прямая ссылка для загрузки"}]}.
 
 %% ----------------------------------------------------------------------
@@ -20,8 +22,10 @@
 
 {text, txt_error,
  [{en, "ERROR"},
+  {ua, "ПОМИЛКА"},
   {ru, "ОШИБКА"}]}.
 
 {text, txt_no_video_support,
  [{en, "Your browser does not support the video tag"},
+  {ua, "Ваш оглядач не підтримує video тег"},
   {ru, "Ваш браузер не поддерживает video тег"}]}.
